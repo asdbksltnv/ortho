@@ -4,7 +4,7 @@
 
 1. Push the repo to GitHub.
 2. Render dashboard → New → Blueprint → select the repo. Render reads `render.yaml`
-   and shows a preview (web service, Postgres, two cron jobs). Fix any schema errors it reports.
+   and shows a preview (web service and Postgres: 2 resources). Fix any schema errors it reports.
 3. When prompted for `sync: false` variables, set `TELEGRAM_BOT_TOKEN` (optional) and
    `ANTHROPIC_API_KEY` (optional). `SECRET_KEY` and `DATABASE_URL` are filled automatically.
 4. Deploy. Pre-deploy runs `alembic upgrade head`; the health check is `/api/health`.
@@ -12,7 +12,11 @@
    must be visible. Never enter real patient data.
 6. Demo credentials will be printed in the deploy log by the Phase 1 seed command, never in the UI.
 
-Cron jobs run in UTC: digest `0 13 * * *` (= 18:00 Asia/Tashkent), lab expiry `0 2 * * *`.
+Cron jobs live in `render-cron.yaml` so the main Blueprint stays at 2 resources (Render limits
+resources per workspace). They are stubs until Phase 3. To add them, create a second Blueprint with
+file path `render-cron.yaml`. If Render rejects its `fromDatabase` reference to a database from
+another Blueprint, set `DATABASE_URL` by hand on each cron job (copy the internal connection string).
+Cron runs in UTC: digest `0 13 * * *` (= 18:00 Asia/Tashkent), lab expiry `0 2 * * *`.
 
 ## B. Hospital server or Uzbek cloud (real patients)
 

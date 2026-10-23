@@ -24,3 +24,8 @@
 - `render.yaml` was written from the Render Blueprint docs but not validated on Render. Check the
   Blueprint preview when creating it.
 - pytest warns that Starlette's TestClient prefers `httpx2`; harmless, revisit on upgrade.
+
+## Render resource limit
+- Render rejected the 4-resource Blueprint (workspace limit of 25 resources). Cron jobs moved to
+  `render-cron.yaml`; `render.yaml` has the web service and database only.
+- Unverified: whether a second Blueprint may reference `orthoready-db` through `fromDatabase`.

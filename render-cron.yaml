@@ -1,0 +1,45 @@
+# Cron jobs, split out of render.yaml to stay under Render's per-workspace resource limit.
+# The jobs are stubs until Phase 3. Create a second Blueprint from this file (Blueprints ->
+# New Blueprint -> Blueprint file path: render-cron.yaml) once there is room.
+# This file reuses the existing orthoready-db database, so it declares no database itself.
+services:
+  # Render cron schedules are in UTC. Asia/Tashkent is UTC+5 (no DST): 18:00 local = 13:00 UTC.
+  - type: cron
+    name: orthoready-daily-digest
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "0 13 * * *"
+    dockerCommand: python -m app.jobs.daily_digest
+    envVars:
+      - key: ENV
+        value: production
+      - key: DEMO_MODE
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: orthoready-db
+          property: connectionString
+      - key: TZ_DISPLAY
+        value: Asia/Tashkent
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+
+  - type: cron
+    name: orthoready-lab-expiry
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "0 2 * * *"
+    dockerCommand: python -m app.jobs.lab_expiry
+    envVars:
+      - key: ENV
+        value: production
+      - key: DEMO_MODE
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: orthoready-db
+          property: connectionString
+      - key: TZ_DISPLAY
+        value: Asia/Tashkent
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
