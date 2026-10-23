@@ -584,3 +584,113 @@ def test_llm_note_is_still_a_locked_draft(
     entry = create(postop_case).json()["id"]
     doc = generate_t6(postop_case, entry).json()
     assert fields(doc)["general_condition"]["locked"] is True
+
+
+# -------------------------------------------------------------- OpenAI provider
+
+
+@pytest.fixture
+def openai(monkeypatch: pytest.MonkeyPatch) -> list[httpx.Request]:
+    monkeypatch.setenv("AI_PROVIDER", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setenv("AI_MODEL", "my-openai-model")
+    get_settings.cache_clear()
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        reply = {
+            "general_condition": "Состояние удовлетворительное.",
+            "local_status": "Повязка сухая.",
+        }
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": json.dumps(reply, ensure_ascii=False),
+                        }
+                    }
+                ]
+            },
+        )
+
+    monkeypatch.setattr(
+        "app.services.notes.httpx.Client",
+        lambda timeout=None: REAL_CLIENT(transport=httpx.MockTransport(handler)),
+    )
+    return requests
+
+
+def test_openai_provider_drafts_the_note_without_identifiers(
+    api: Api, postop_case: uuid.UUID, openai: list[httpx.Request]
+) -> None:
+    resp = create(
+        postop_case,
+        complaints="Иванов Алишер, история T-0001",
+        therapy={"antibiotic_day": 1, "analgesia": "секретный препарат"},
+    )
+    note = resp.json()["note"]
+    assert note["generator"] == "llm"
+    assert note["general_condition"] == "2-е сутки после операции. Состояние удовлетворительное."
+    assert note["approved"] is False  # still a locked draft
+    request = openai[0]
+    assert str(request.url) == "https://api.openai.com/v1/chat/completions"
+    assert request.headers["authorization"] == "Bearer sk-test"
+    body = request.content.decode()
+    sent = json.loads(body)
+    assert sent["model"] == "my-openai-model" and sent["response_format"] == {"type": "json_object"}
+    assert (
+        sent["messages"][0]["role"] == "system"
+        and "только предоставленные факты" in sent["messages"][0]["content"]
+    )
+    for forbidden in ("Иванов", "Алишер", "T-0001", "1960", "секретный", "Тест doctor"):
+        assert forbidden not in body, forbidden
+    payload = json.loads(sent["messages"][1]["content"])
+    assert "complaints" not in payload and payload["therapy"]["analgesia_given"] is True
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(500),
+        httpx.Response(200, json={"choices": []}),
+        httpx.Response(200, json={"choices": [{"message": {"content": "не JSON"}}]}),
+        httpx.Response(200, json={"error": {"message": "bad key"}}),
+    ],
+)
+def test_openai_failures_fall_back_to_the_template(
+    api: Api,
+    postop_case: uuid.UUID,
+    openai: list[httpx.Request],
+    monkeypatch: pytest.MonkeyPatch,
+    response: httpx.Response,
+) -> None:
+    monkeypatch.setattr(
+        "app.services.notes.httpx.Client",
+        lambda timeout=None: REAL_CLIENT(transport=httpx.MockTransport(lambda r: response)),
+    )
+    assert create(postop_case).json()["note"]["generator"] == "template"
+
+
+def test_openai_base_url_can_point_at_a_compatible_endpoint(
+    api: Api, postop_case: uuid.UUID, openai: list[httpx.Request], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://llm.example.org/v1/")
+    get_settings.cache_clear()
+    create(postop_case)
+    assert str(openai[0].url) == "https://llm.example.org/v1/chat/completions"
+
+
+@pytest.mark.parametrize("missing", ["OPENAI_API_KEY", "AI_MODEL"])
+def test_openai_needs_both_key_and_model(
+    api: Api, postop_case: uuid.UUID, monkeypatch: pytest.MonkeyPatch, missing: str
+) -> None:
+    monkeypatch.setenv("AI_PROVIDER", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setenv("AI_MODEL", "m")
+    monkeypatch.delenv(missing)
+    get_settings.cache_clear()
+    assert create(postop_case).json()["note"]["generator"] == "template"

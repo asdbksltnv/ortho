@@ -178,6 +178,19 @@ def seed_if_empty() -> dict[str, str] | None:
         return credentials
 
 
+def apply_demo_password(password: str) -> int:
+    """Sets one known password on the demo users (DEMO_MODE only). Returns how many were updated."""
+    if len(password) < 10:
+        raise ValueError("DEMO_PASSWORD must be at least 10 characters")
+    logins = {login for login, _, _ in DEMO_USERS}
+    with get_session_factory()() as session:
+        users = list(session.scalars(select(User).where(User.login.in_(logins))))
+        for user in users:
+            user.password_hash = hash_password(password)
+        session.commit()
+        return len(users)
+
+
 def print_credentials(credentials: dict[str, str]) -> None:
     print("=== DEMO CREDENTIALS (synthetic data only; shown once in this log) ===", flush=True)
     for login, password in credentials.items():

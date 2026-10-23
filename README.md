@@ -45,6 +45,6 @@ budget for a 60-case board (`perf.spec.ts`).
 
 ## Data protection
 
-Render pilot = `DEMO_MODE=true`, synthetic data only. Real patient data must run on a server in
-Uzbekistan. No patient identifiers in URLs, logs, Telegram, error reports or LLM requests.
+`render.yaml` is the production configuration (`DEMO_MODE=false`). Uzbekistan's data law requires
+real patient data to be stored on servers in Uzbekistan, which Render is not: see DEPLOY.md. No patient identifiers in URLs, logs, Telegram, error reports or LLM requests.
 See DEPLOY.md.

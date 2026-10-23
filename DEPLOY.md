@@ -1,24 +1,35 @@
 # Deployment
 
-## A. Render pilot (demo mode, synthetic data only)
+## A. Render (production configuration, `DEMO_MODE=false`)
 
-1. Push the repo to GitHub.
-2. Render dashboard → New → Blueprint → select the repo. Render reads `render.yaml`
-   and shows a preview (web service and Postgres: 2 resources). Fix any schema errors it reports.
-3. When prompted for `sync: false` variables, set `TELEGRAM_BOT_TOKEN` (optional) and
-   `ANTHROPIC_API_KEY` (optional). `SECRET_KEY` and `DATABASE_URL` are filled automatically.
-4. Deploy. Pre-deploy runs `python -m app.predeploy` (migrations, then demo seed); the health check is `/api/health`.
-5. Open the service URL: the amber banner «Демо-режим: не вводите реальные данные пациентов»
-   must be visible. Never enter real patient data.
-6. Demo credentials are printed once in the deploy log (look for `DEMO CREDENTIALS`) by the
-   pre-deploy seed, never in the UI. Logins: doctor1, doctor2, nurse1, anaesth1, head1,
-   headnurse1, admin1. The seed runs only when the database has no users.
+`render.yaml` is now the production configuration: no demo data, no demo banner, strict cookies.
 
-Cron jobs live in `render-cron.yaml` so the main Blueprint stays at 2 resources (Render limits
-resources per workspace). They are stubs until Phase 3. To add them, create a second Blueprint with
-file path `render-cron.yaml`. If Render rejects its `fromDatabase` reference to a database from
-another Blueprint, set `DATABASE_URL` by hand on each cron job (copy the internal connection string).
-Cron runs in UTC: digest `0 13 * * *` (= 18:00 Asia/Tashkent), lab expiry `0 2 * * *`.
+1. In the Render dashboard open the service → **Environment** and set:
+   - `ADMIN_PASSWORD` (at least 10 characters; the first administrator, used only while no real
+     admin exists), and optionally `ADMIN_LOGIN` (default `admin`) and `ADMIN_FULL_NAME`;
+   - `OPENAI_API_KEY` and `AI_MODEL` (the note generator falls back to templates without them);
+   - `TELEGRAM_BOT_TOKEN` and `PUBLIC_URL` (optional).
+   New variables marked `sync: false` in a Blueprint are not always prompted for on an existing
+   service, so add them by hand if they are missing.
+2. Redeploy. The pre-deploy step runs `python -m app.predeploy`: migrations, then it creates the
+   administrator and **retires the demo accounts** (deactivated, not deleted) and takes the demo
+   cases off the board. Demo accounts are switched off only once a real administrator exists, so a
+   missing `ADMIN_PASSWORD` cannot lock everyone out; the deploy log says what happened.
+3. Log in as the administrator, create the real users (Пользователи) and wards/beds
+   (Палаты и койки), then review the amber "clinical configuration not approved" list.
+4. **Before entering real patient data, read these limits:**
+   - Uzbekistan's personal-data law requires citizens' data to be stored on servers in Uzbekistan.
+     Render's regions (Oregon, Ohio, Virginia, Frankfurt, Singapore) are not. Use section B for
+     real patients unless the hospital's legal team has approved otherwise.
+   - A Render **free** Postgres database expires after 30 days and has no backups. For real data use
+     a paid database plan with backups and set `plan:` in `render.yaml` accordingly.
+   - The filesystem is ephemeral: wound photos need `STORAGE_BACKEND=s3`.
+
+To run a synthetic-data demo instead, set `DEMO_MODE=true` (shows the banner, seeds seven demo
+users and twelve cases, prints their random passwords once in the deploy log, or set
+`DEMO_PASSWORD` to choose one) and keep real data out.
+
+Cron jobs run in UTC: digest `0 13 * * *` (= 18:00 Asia/Tashkent), lab expiry `0 2 * * *`.
 
 ## B. Hospital server or Uzbek cloud (real patients)
 
@@ -49,8 +60,9 @@ The image has no Render-specific code; everything is configured via environment 
 - **Jobs** (`python -m app.jobs.<name>`): `daily_digest` 18:00, `lab_expiry` daily, `postop_reminder`
   12:00, `alert_scan` every 30 min. On Render they are in `render-cron.yaml` (UTC schedules); on a
   hospital server use the host cron. `SCHEDULER_ENABLED=true` runs them in-process for development.
-- **AI notes**: default is the deterministic template generator. To enable the optional LLM:
-  `AI_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, `AI_MODEL`. Only de-identified structured data is
+- **AI notes**: the deterministic template generator is the fallback. To use OpenAI as the main
+  model set `AI_PROVIDER=openai`, `OPENAI_API_KEY` and `AI_MODEL` (a model name available to your
+  key); Anthropic works the same way (`AI_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`). Only de-identified structured data is
   sent; any failure falls back to the template text. Every draft stays locked until a doctor
   presses «Проверено».
 - **Wound photos**: disabled in demo mode. Elsewhere `STORAGE_BACKEND=local` (needs a persistent

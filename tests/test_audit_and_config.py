@@ -4,6 +4,7 @@ from typing import Any
 
 import pytest
 import yaml
+from sqlalchemy import select
 
 from app.domain.enums import Role
 from app.services.config_loader import load_config
@@ -261,6 +262,166 @@ def test_create_admin_command(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     with db_module.get_session_factory()() as s:
         user = s.scalars(select(User).where(User.login == "boss")).one()
         assert user.role == "admin" and "Long!Passw0rd1" not in user.password_hash
+    db_module.get_engine.cache_clear()
+    db_module.get_session_factory.cache_clear()
+    get_settings.cache_clear()
+
+
+def test_demo_password_applies_to_demo_users_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from alembic import command
+    from alembic.config import Config
+    from sqlalchemy import select
+
+    from app import db as db_module
+    from app.auth import verify_password
+    from app.models.user import User
+    from app.seed import apply_demo_password, seed_if_empty
+    from app.settings import get_settings
+
+    monkeypatch.setenv("DATABASE_URL", f"sqlite+pysqlite:///{tmp_path / 'p.db'}")
+    get_settings.cache_clear()
+    db_module.get_engine.cache_clear()
+    db_module.get_session_factory.cache_clear()
+    root = Path(__file__).resolve().parents[1]
+    cfg = Config(str(root / "alembic.ini"))
+    cfg.set_main_option("script_location", str(root / "migrations"))
+    command.upgrade(cfg, "head")
+    seed_if_empty()
+    with db_module.get_session_factory()() as s:
+        from app.auth import hash_password
+
+        s.add(
+            User(
+                login="real.user",
+                full_name="Не демо",
+                role="nurse",
+                password_hash=hash_password("Original!Pass123"),
+            )
+        )
+        s.commit()
+    with pytest.raises(ValueError):
+        apply_demo_password("short")
+    assert apply_demo_password("Shared!DemoPass1") == 7
+    with db_module.get_session_factory()() as s:
+        rows = {u.login: u for u in s.scalars(select(User))}
+        assert verify_password("Shared!DemoPass1", rows["head1"].password_hash)
+        assert verify_password("Shared!DemoPass1", rows["admin1"].password_hash)
+        assert verify_password("Original!Pass123", rows["real.user"].password_hash)  # untouched
+    db_module.get_engine.cache_clear()
+    db_module.get_session_factory.cache_clear()
+    get_settings.cache_clear()
+
+
+def _prod_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, **env: str) -> Any:
+    from alembic import command
+    from alembic.config import Config
+
+    from app import db as db_module
+    from app.settings import get_settings
+
+    monkeypatch.setenv("DATABASE_URL", f"sqlite+pysqlite:///{tmp_path / 'prod.db'}")
+    monkeypatch.setenv("DEMO_MODE", "false")
+    for key, value in env.items():
+        monkeypatch.setenv(key, value)
+    get_settings.cache_clear()
+    db_module.get_engine.cache_clear()
+    db_module.get_session_factory.cache_clear()
+    root = Path(__file__).resolve().parents[1]
+    cfg = Config(str(root / "alembic.ini"))
+    cfg.set_main_option("script_location", str(root / "migrations"))
+    command.upgrade(cfg, "head")
+    return db_module
+
+
+def test_production_predeploy_creates_the_first_admin_and_retires_demo_data(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from app.auth import verify_password
+    from app.models.case import Case
+    from app.models.user import User
+    from app.predeploy import main as predeploy
+    from app.seed import seed_if_empty
+    from app.settings import get_settings
+
+    db_module = _prod_db(tmp_path, monkeypatch)
+    seed_if_empty()  # an earlier demo deployment left synthetic users and cases behind
+    monkeypatch.setenv("ADMIN_PASSWORD", "Real!Admin-Pass1")
+    monkeypatch.setenv("ADMIN_LOGIN", "chief.admin")
+    get_settings.cache_clear()
+    predeploy()
+    out = capsys.readouterr().out
+    assert "Real!Admin-Pass1" not in out and "administrator 'chief.admin' created" in out
+    assert "retired 7 demo user(s) and 12 demo case(s)" in out
+    with db_module.get_session_factory()() as s:
+        users = {u.login: u for u in s.scalars(select(User))}
+        assert users["chief.admin"].role == "admin" and users["chief.admin"].is_active
+        assert verify_password("Real!Admin-Pass1", users["chief.admin"].password_hash)
+        assert not any(users[k].is_active for k in ("doctor1", "head1", "nurse1", "admin1"))
+        assert {c.status for c in s.scalars(select(Case))} == {"discharged"}
+    predeploy()  # idempotent
+    assert "an administrator already exists" in capsys.readouterr().out
+    db_module.get_engine.cache_clear()
+    db_module.get_session_factory.cache_clear()
+    get_settings.cache_clear()
+
+
+def test_demo_users_stay_active_until_a_real_admin_exists(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from app.models.user import User
+    from app.predeploy import main as predeploy
+    from app.seed import seed_if_empty
+    from app.settings import get_settings
+
+    db_module = _prod_db(tmp_path, monkeypatch)
+    seed_if_empty()
+    predeploy()  # no ADMIN_PASSWORD: warn, and do not lock everyone out
+    assert "NO ADMINISTRATOR EXISTS" in capsys.readouterr().out
+    with db_module.get_session_factory()() as s:
+        assert all(u.is_active for u in s.scalars(select(User)))
+    monkeypatch.setenv("ADMIN_PASSWORD", "short")
+    get_settings.cache_clear()
+    predeploy()
+    assert "at least 10 characters" in capsys.readouterr().out
+    db_module.get_engine.cache_clear()
+    db_module.get_session_factory.cache_clear()
+    get_settings.cache_clear()
+
+
+def test_first_admin_never_overwrites_an_existing_account(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.auth import hash_password, verify_password
+    from app.bootstrap import ensure_first_admin
+    from app.models.user import User
+    from app.settings import get_settings
+
+    db_module = _prod_db(tmp_path, monkeypatch, ADMIN_PASSWORD="Another!Pass123")  # noqa: S106
+    with db_module.get_session_factory()() as s:
+        s.add(
+            User(
+                login="admin",
+                full_name="Nurse",
+                role="nurse",
+                password_hash=hash_password("Nurse!Pass12345"),
+            )
+        )
+        s.commit()
+        assert "taken by a non-admin" in ensure_first_admin(s, get_settings())
+        s.add(
+            User(
+                login="boss",
+                full_name="Boss",
+                role="admin",
+                password_hash=hash_password("Boss!Pass123456"),
+            )
+        )
+        s.commit()
+        assert "already exists" in ensure_first_admin(s, get_settings())
+        boss = s.scalars(select(User).where(User.login == "boss")).one()
+        assert verify_password("Boss!Pass123456", boss.password_hash)
     db_module.get_engine.cache_clear()
     db_module.get_session_factory.cache_clear()
     get_settings.cache_clear()

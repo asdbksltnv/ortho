@@ -1,8 +1,9 @@
 """Progress-note generators behind one interface.
 
 The default is deterministic Russian text from Jinja2 templates. An optional LLM generator
-(AI_PROVIDER=anthropic) receives de-identified structured data only (`llm_safe`), is told to use
-only the given facts, and its output is validated; on any failure the template text is used.
+(AI_PROVIDER=openai or anthropic) receives de-identified structured data only
+(`llm_safe`), is told to use only the given facts, and its output is validated; on any
+failure the template text is used.
 """
 
 import json
@@ -20,6 +21,7 @@ logger = logging.getLogger("notes")
 
 MAX_FIELD_CHARS = 1500
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
+OPENAI_URL = "https://api.openai.com/v1"
 SYSTEM_PROMPT = (
     "Ты помогаешь врачу-ортопеду оформить дневниковую запись. Напиши клинический текст на русском "
     "языке, используя только предоставленные факты. Не добавляй новых находок и не давай "
@@ -65,36 +67,70 @@ class TemplateNoteGenerator:
 
 
 class LLMNoteGenerator:
-    name = "llm"
+    """Calls a hosted model (OpenAI or Anthropic) with de-identified structured data only."""
 
-    def __init__(self, api_key: str, model: str, timeout: float, http: httpx.Client | None = None):
+    def __init__(
+        self,
+        provider: str,
+        api_key: str,
+        model: str,
+        timeout: float,
+        http: httpx.Client | None = None,
+        base_url: str = OPENAI_URL,
+    ):
+        self.name = "llm"
+        self._provider = provider
         self._api_key = api_key
         self._model = model
+        self._base_url = base_url.rstrip("/")
         self._http = http or httpx.Client(timeout=timeout)
+
+    def _request(self, user_content: str) -> tuple[str, dict[str, str], dict[str, Any]]:
+        if self._provider == "openai":
+            return (
+                f"{self._base_url}/chat/completions",
+                {"Authorization": f"Bearer {self._api_key}", "Content-Type": "application/json"},
+                {
+                    "model": self._model,
+                    "max_completion_tokens": 1024,
+                    # JSON mode: the system prompt asks for a JSON object.
+                    "response_format": {"type": "json_object"},
+                    "messages": [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": user_content},
+                    ],
+                },
+            )
+        return (
+            ANTHROPIC_URL,
+            {
+                "x-api-key": self._api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            {
+                "model": self._model,
+                "max_tokens": 1024,
+                "system": SYSTEM_PROMPT,
+                "messages": [{"role": "user", "content": user_content}],
+            },
+        )
+
+    def _text(self, data: dict[str, Any]) -> str:
+        if self._provider == "openai":
+            return str(data["choices"][0]["message"]["content"])
+        return str(data["content"][0]["text"])
 
     def generate(self, structured_input: dict[str, Any]) -> NoteOutput:
         payload = llm_safe(
             structured_input
         )  # no names, dates of birth, record numbers or free text
-        body = {
-            "model": self._model,
-            "max_tokens": 1024,
-            "system": SYSTEM_PROMPT,
-            "messages": [{"role": "user", "content": json.dumps(payload, ensure_ascii=False)}],
-        }
+        url, headers, body = self._request(json.dumps(payload, ensure_ascii=False))
         try:
-            response = self._http.post(
-                ANTHROPIC_URL,
-                headers={
-                    "x-api-key": self._api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
-                },
-                json=body,
-            )
+            response = self._http.post(url, headers=headers, json=body)
             response.raise_for_status()
-            text = response.json()["content"][0]["text"]
-        except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
+            text = self._text(response.json())
+        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
             raise NoteGenerationError(type(exc).__name__) from None
         return validate_output(text, int(structured_input["post_op_day"]))
 
@@ -127,9 +163,13 @@ def generate_note(
 ) -> tuple[str, NoteOutput]:
     """Returns (generator name, output). Falls back to the template generator on any failure."""
     template = TemplateNoteGenerator()
-    if settings.ai_provider == "anthropic" and settings.anthropic_api_key and settings.ai_model:
+    provider = settings.ai_provider
+    key = {"openai": settings.openai_api_key, "anthropic": settings.anthropic_api_key}.get(
+        provider, ""
+    )
+    if provider != "template" and key and settings.ai_model:
         generator = LLMNoteGenerator(
-            settings.anthropic_api_key, settings.ai_model, settings.ai_timeout_s, http
+            provider, key, settings.ai_model, settings.ai_timeout_s, http, settings.openai_base_url
         )
         try:
             return generator.name, generator.generate(structured_input)

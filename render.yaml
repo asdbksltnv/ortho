@@ -1,5 +1,5 @@
 # Render Blueprint. Syntax checked against https://render.com/docs/blueprint-spec
-# Pilot runs with synthetic data only (DEMO_MODE=true); see DEPLOY.md.
+# Production configuration (DEMO_MODE=false). See DEPLOY.md before entering real patient data.
 databases:
   - name: orthoready-db
     databaseName: orthoready
@@ -20,7 +20,7 @@ services:
       - key: ENV
         value: production
       - key: DEMO_MODE
-        value: "true"
+        value: "false"
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
@@ -36,11 +36,19 @@ services:
       - key: PUBLIC_URL
         sync: false # https://<your-service>.onrender.com, used to register the Telegram webhook
       - key: AI_PROVIDER
-        value: template
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ADMIN_LOGIN
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false # first administrator; used only when no admin exists yet
+      - key: ADMIN_FULL_NAME
+        value: Администратор
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: AI_MODEL
-        value: ""
+        sync: false # model name from your OpenAI account, e.g. the one you use for chat
       - key: STORAGE_BACKEND
         value: disabled
       - key: SESSION_TIMEOUT_MIN

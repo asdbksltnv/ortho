@@ -214,3 +214,25 @@
   with real users.
 - **Load data**: `seed_extra_cases()` adds synthetic cases (rooms, beds, checklists) for load and
   performance checks; it is used by the tests and the performance project in `e2e/`.
+
+## OpenAI as the main note model
+- `AI_PROVIDER=openai` uses the Chat Completions API (`POST {OPENAI_BASE_URL}/chat/completions`,
+  JSON mode, `max_completion_tokens`) with `OPENAI_API_KEY` and `AI_MODEL`; Anthropic remains an
+  alternative. It was **not tested against the live OpenAI API** (only against a mocked transport),
+  so the first real call should be checked; any HTTP error, bad shape or invalid JSON falls back to
+  the template text. The model name is deliberately not hard-coded: set `AI_MODEL`.
+- The privacy rules are unchanged and tested for OpenAI too: only `llm_safe()` data is sent (no
+  name, birth date, record number or free text), and every draft stays locked until a doctor presses
+  «Проверено». Note that this data still leaves the server for a third party; for real patients,
+  check the hospital's data-protection requirements and the provider's data-use terms first.
+- `DEMO_PASSWORD` (optional, DEMO_MODE only) sets one known password on the seven demo users at each
+  deploy, as an alternative to the random passwords printed once in the deploy log.
+
+## Production switch on Render
+- `render.yaml` and `render-cron.yaml` now set `DEMO_MODE=false`. The pre-deploy step creates the
+  first administrator from `ADMIN_PASSWORD` (never overwriting an existing account), and retires
+  the demo users and demo cases only after a real administrator exists, so it cannot lock the
+  deployment. Retired demo users are deactivated rather than deleted because audit rows reference them.
+- **Not resolved by this switch**: the original requirement that real patient data live on a server
+  in Uzbekistan (Render has no such region) and Render's free Postgres expiry (30 days, no backups).
+  These are legal and operational decisions for the hospital; DEPLOY.md lists them.

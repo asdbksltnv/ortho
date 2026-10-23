@@ -26,10 +26,16 @@ class Settings(BaseSettings):
     session_timeout_min: int = 15
     decimal_separator: str = ","
 
+    admin_login: str = "admin"  # first administrator, created at deploy when none exists
+    admin_password: str = ""
+    admin_full_name: str = "Администратор"
+    demo_password: str = ""  # optional fixed password for the demo users (DEMO_MODE only)
     telegram_bot_token: str = ""
     telegram_mode: Literal["webhook", "polling"] = "polling"
 
-    ai_provider: Literal["template", "anthropic"] = "template"
+    ai_provider: Literal["template", "openai", "anthropic"] = "template"
+    openai_api_key: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
     anthropic_api_key: str = ""
     ai_model: str = ""
 
