@@ -17,6 +17,7 @@ from app.schemas.api import (
     ColumnDef,
     ConfigFileOut,
     DefinitionsOut,
+    LabOut,
     ProcedureOut,
 )
 
@@ -82,6 +83,7 @@ def definitions(config: ConfigDep, _: UserDep) -> DefinitionsOut:
             for d in config.checklist.items
         ],
         procedures=[ProcedureOut(id=p.id, label_ru=p.label_ru) for p in config.procedures.values()],
+        labs=[LabOut(code=lab.code, name_ru=lab.name_ru) for lab in config.labs.labs],
     )
 
 

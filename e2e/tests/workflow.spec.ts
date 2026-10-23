@@ -6,7 +6,7 @@ test.use({ viewport: { width: 390, height: 844 }, hasTouch: true })
 // `last` keeps this file independent of other specs that use the first matching case.
 async function openCase(page: import('@playwright/test').Page, status: string, notReady?: boolean) {
   await page.goto('/')
-  const rows = page.locator('tbody tr', { hasText: status })
+  const rows = page.locator('[data-case-row]', { hasText: status })
   const row = notReady === undefined ? rows.last() : rows.filter({ hasText: notReady ? 'Не готов' : 'Готов' }).last()
   await row.getByRole('link').first().click()
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
@@ -77,7 +77,7 @@ test('a not-ready case cannot be called to the OR; the head overrides with a rea
 
   // The override is visible on the board
   await head.goto('/')
-  await expect(head.locator('tbody tr', { hasText: 'Освободилась операционная' })).toBeVisible()
+  await expect(head.locator('[data-case-row]', { hasText: 'Освободилась операционная' })).toBeVisible()
 
   // The ward nurse is notified in the app (and sees no patient name)
   const nurseContext = await browser.newContext({ viewport: { width: 390, height: 844 } })

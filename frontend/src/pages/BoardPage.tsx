@@ -10,6 +10,7 @@ import { FloorPlan } from '../components/FloorPlan'
 import { StatusIcon } from '../components/StatusIcon'
 import { formatDate, formatDateTime } from '../lib/format'
 import { canEditItem } from '../lib/permissions'
+import { PHONE, useMediaQuery } from '../lib/useMediaQuery'
 
 const POLL_MS = 5000 // other users' changes appear within the 10 s target
 const VIEW_KEY = 'orthoready:board-view'
@@ -25,6 +26,7 @@ function savedView(): 'table' | 'plan' {
 export function BoardPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const isPhone = useMediaQuery(PHONE)
   const [mine, setMine] = useState(false)
   const [tomorrow, setTomorrow] = useState(false)
   const [notReady, setNotReady] = useState(false)
@@ -72,8 +74,20 @@ export function BoardPage() {
 
   return (
     <main className="mx-auto max-w-[1600px] px-3 py-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <h1 className="mr-auto text-xl font-bold">{t('board.title')}</h1>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h1 className="text-xl font-bold">{t('board.title')}</h1>
+        {board && (
+          <p className="text-sm text-slate-600" data-testid="board-summary">
+            {board.rows.length} {t('board.summaryTotal')} ·{' '}
+            {board.rows.filter((r) => r.ready).length} {t('board.summaryReady')}
+          </p>
+        )}
+      </div>
+      <div
+        className="-mx-3 mt-3 flex items-center gap-2 overflow-x-auto px-3 pb-1"
+        role="group"
+        aria-label={t('board.filters')}
+      >
         <Toggle label={t('board.mine')} checked={mine} onChange={setMine} />
         <Toggle label={t('board.tomorrow')} checked={tomorrow} onChange={setTomorrow} />
         <Toggle label={t('board.notReady')} checked={notReady} onChange={setNotReady} />
@@ -81,7 +95,7 @@ export function BoardPage() {
           aria-label={t('board.doctor')}
           value={doctorId}
           onChange={(e) => setDoctorId(e.target.value)}
-          className="min-h-11 rounded border border-slate-400 bg-white px-2"
+          className="min-h-11 shrink-0 rounded-full border border-slate-300 bg-white px-3 text-sm"
         >
           <option value="">{t('board.allDoctors')}</option>
           {doctors.map(([id, name]) => (
@@ -98,7 +112,11 @@ export function BoardPage() {
         <p className="mt-6 text-slate-700">{t('board.empty')}</p>
       )}
 
-      <div role="radiogroup" aria-label={t('board.viewTable')} className="mt-3 flex gap-2">
+      <div
+        role="radiogroup"
+        aria-label={t('board.viewTable')}
+        className="mt-3 inline-flex rounded-lg border border-slate-300 bg-white p-1"
+      >
         {(['table', 'plan'] as const).map((v) => (
           <button
             key={v}
@@ -119,7 +137,20 @@ export function BoardPage() {
 
       {view === 'plan' && board && wards.data && <FloorPlan wards={wards.data} rows={board.rows} />}
 
-      {view === 'table' && board && board.rows.length > 0 && (
+      {view === 'table' && isPhone && board && board.rows.length > 0 && (
+        <ul className="mt-3 grid gap-3">
+          {board.rows.map((row) => (
+            <PatientCard
+              key={row.case_id}
+              row={row}
+              columns={columns}
+              onEdit={(key) => setEditing({ row, key })}
+            />
+          ))}
+        </ul>
+      )}
+
+      {view === 'table' && !isPhone && board && board.rows.length > 0 && (
         <div className="mt-3 overflow-x-auto rounded border border-slate-300 bg-white">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead className="bg-slate-100 text-left">
@@ -155,7 +186,10 @@ export function BoardPage() {
                     row={row}
                     colSpan={columns.length + 3}
                   >
-                    <tr className="border-t border-slate-200 odd:bg-white even:bg-slate-50/60">
+                    <tr
+                      data-case-row
+                      className="border-t border-slate-200 odd:bg-white even:bg-slate-50/60"
+                    >
                       <th
                         scope="row"
                         className="sticky left-0 z-10 bg-inherit px-3 py-2 text-left font-normal"
@@ -299,12 +333,95 @@ function Toggle({
 }) {
   return (
     <label
-      className={`flex min-h-11 cursor-pointer items-center gap-2 rounded border px-3 text-sm ${
-        checked ? 'border-teal-700 bg-teal-50 font-semibold' : 'border-slate-400 bg-white'
+      className={`flex min-h-11 shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border px-4 text-sm ${
+        checked
+          ? 'border-teal-700 bg-teal-50 font-semibold text-teal-900'
+          : 'border-slate-300 bg-white'
       }`}
     >
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       {label}
     </label>
+  )
+}
+
+function PatientCard({
+  row,
+  columns,
+  onEdit,
+}: {
+  row: BoardRow
+  columns: Board['columns']
+  onEdit: (key: string) => void
+}) {
+  const { t } = useTranslation()
+  const applicable = row.applicable_count ?? 0
+  const done = Math.max(0, applicable - row.blocking.length)
+  const pct = applicable ? Math.round((done / applicable) * 100) : 100
+  return (
+    <li data-case-row className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-3">
+        <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+          {(row.room_name ?? t('board.noRoom')).replace(/^Пал\.\s*/, '')}
+          {row.bed_label ? ` · ${row.bed_label}` : ''}
+        </span>
+        <div className="min-w-0 flex-1">
+          <Link
+            to={`/case/${row.case_id}`}
+            className="text-lg font-bold text-teal-800 underline-offset-2 hover:underline"
+          >
+            {row.initials}
+          </Link>
+          {row.is_emergency && (
+            <span className="ml-2 rounded bg-red-700 px-1.5 py-0.5 text-xs font-semibold text-white">
+              {t('board.emergency')}
+            </span>
+          )}
+          <p className="truncate text-xs text-slate-600">
+            {t(`caseStatus.${row.status}`)} · {row.procedure_label}
+          </p>
+          <p className="text-xs text-slate-600">
+            {formatDate(row.planned_surgery_date)} · {row.treating_doctor_name}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${row.ready ? 'bg-green-100 text-green-900' : 'bg-red-100 text-red-900'}`}
+        >
+          {row.ready
+            ? `✔ ${t('board.ready')}`
+            : `✖ ${t('board.notReadyBadge')} (${row.blocking.length})`}
+        </span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100" aria-hidden>
+        <div
+          className={`h-full rounded-full ${row.ready ? 'bg-green-600' : 'bg-teal-600'}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <p className="mt-1 text-[11px] text-slate-600">
+        {done}/{applicable} {t('board.progress')}
+      </p>
+      {row.override_reason && <p className="mt-1 text-xs text-amber-800">{row.override_reason}</p>}
+      <div className="mt-2 grid grid-cols-4 gap-1">
+        {columns.map((c) => {
+          const item = row.items[c.key]
+          const blocking = row.blocking.includes(c.key)
+          return (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => onEdit(c.key)}
+              aria-label={`${c.label_ru}: ${t(`itemStatus.${item.status}`)}`}
+              className={`flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-lg border px-1 text-[10px] leading-tight ${
+                blocking ? 'border-red-200 bg-red-50' : 'border-slate-100 bg-slate-50'
+              }`}
+            >
+              <StatusIcon status={item.status} size={22} />
+              <span className="w-full truncate text-center text-slate-700">{c.short_label_ru}</span>
+            </button>
+          )
+        })}
+      </div>
+    </li>
   )
 }

@@ -17,10 +17,22 @@ def test_plan_matches_the_10th_floor_evacuation_plan() -> None:
     patient = [r.name for r in plan.rooms if r.kind == "patient"]
     assert patient == [f"Пал. {n}" for n in range(1001, 1017)]
     service = {r.name for r in plan.rooms if r.kind != "patient"}
-    assert {"Ординаторская", "Перевязочная", "Процедурная 1", "Процедурная 2", "Лифт", "Лифт 2"} <= service
+    assert {
+        "Ординаторская",
+        "Перевязочная",
+        "Процедурная 1",
+        "Процедурная 2",
+        "Лифт",
+        "Лифт 2",
+    } <= service
     assert all(r.beds == 0 for r in plan.rooms if r.kind != "patient")
     for r in plan.rooms:  # everything sits on the canvas
-        assert 0 <= r.x and r.x + r.w <= plan.canvas.width and 0 <= r.y and r.y + r.h <= plan.canvas.height
+        assert (
+            r.x >= 0
+            and r.x + r.w <= plan.canvas.width
+            and r.y >= 0
+            and r.y + r.h <= plan.canvas.height
+        )
 
 
 def test_rooms_do_not_overlap() -> None:

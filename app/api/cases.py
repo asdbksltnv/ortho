@@ -78,7 +78,11 @@ def _case_out(session: Session, case: Case, user: CurrentUser, config: AppConfig
             )
             for i in case.checklist_items
         ],
-        readiness=ReadinessOut(ready=readiness.ready, blocking=list(readiness.blocking)),
+        readiness=ReadinessOut(
+            ready=readiness.ready,
+            blocking=list(readiness.blocking),
+            applicable=list(readiness.applicable),
+        ),
         can_edit=can_edit_case(user.role, is_treating_doctor=case.treating_doctor_id == user.id),
         available_transitions=available_targets(
             CaseStatus(case.status),

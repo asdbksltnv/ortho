@@ -175,6 +175,7 @@ class ItemOut(BaseModel):
 class ReadinessOut(BaseModel):
     ready: bool
     blocking: list[str]
+    applicable: list[str] = Field(default_factory=list)  # items whose blocking rule applies
 
 
 class PatientOut(ORMModel):
@@ -257,6 +258,7 @@ class BoardRow(BaseModel):
     treating_doctor_name: str
     ready: bool
     blocking: list[str]
+    applicable_count: int = 0
     override_reason: str | None
     items: dict[str, BoardItem]
 
@@ -303,9 +305,15 @@ class ProcedureOut(BaseModel):
     label_ru: str
 
 
+class LabOut(BaseModel):
+    code: str
+    name_ru: str
+
+
 class DefinitionsOut(BaseModel):
     checklist: list[ColumnDef]
     procedures: list[ProcedureOut]
+    labs: list[LabOut] = Field(default_factory=list)
 
 
 class AnaesthesiaIn(BaseModel):

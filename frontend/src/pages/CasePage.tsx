@@ -9,6 +9,7 @@ import { ChecklistEditor } from '../components/ChecklistEditor'
 import { OrdersPanel } from '../components/OrdersPanel'
 import { StatusPanel } from '../components/StatusPanel'
 import { StatusIcon } from '../components/StatusIcon'
+import { useToast } from '../components/Toast'
 import { formatDate, formatDateTime } from '../lib/format'
 import { canEditItem, canWriteRecords } from '../lib/permissions'
 
@@ -17,6 +18,7 @@ export function CasePage() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const queryClient = useQueryClient()
+  const toast = useToast()
   const [editingKey, setEditingKey] = useState<string | null>(null)
 
   const caseQuery = useQuery({
@@ -39,18 +41,24 @@ export function CasePage() {
     onSuccess: (data) => {
       queryClient.setQueryData(['case', id], data)
       void queryClient.invalidateQueries({ queryKey: ['board'] })
+      toast(t('case.toastSaved'))
     },
+    onError: () => toast(t('errors.unknown'), 'error'),
   })
 
   const consent = useMutation({
     mutationFn: (type: 'surgical' | 'anaesthesia') =>
       api.post(`/cases/${id}/consents`, { type, signed_at: new Date().toISOString() }),
+    onSuccess: () => toast(t('case.toastConsent')),
   })
 
   const addLab = useMutation({
     mutationFn: (body: { lab_code: string; result_text: string }) =>
       api.post(`/cases/${id}/labs`, { ...body, collected_at: new Date().toISOString() }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['labs', id] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['labs', id] })
+      toast(t('case.toastLab'))
+    },
   })
 
   const [labCode, setLabCode] = useState('hbsag')
@@ -66,18 +74,43 @@ export function CasePage() {
   const editingItem = c.items.find((i) => i.key === editingKey)
   const editingCol = columns.find((col) => col.key === editingKey)
 
+  const applicable = c.readiness.applicable ?? c.items.map((i) => i.key)
+  const done = Math.max(0, applicable.length - c.readiness.blocking.length)
+  const pct = applicable.length ? Math.round((done / applicable.length) * 100) : 100
+  const labName = (code: string) => defs.data?.labs?.find((l) => l.code === code)?.name_ru ?? code
+  // Blocking items first, then the rest in configured order.
+  const orderedItems = [...c.items].sort(
+    (a, b) =>
+      Number(c.readiness.blocking.includes(b.key)) - Number(c.readiness.blocking.includes(a.key)),
+  )
+  const card = 'rounded-xl border border-slate-200 bg-white p-4 shadow-sm'
+  const linkBtn =
+    'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg border px-4 text-sm font-medium'
+
   return (
-    <main className="mx-auto max-w-3xl px-3 py-4">
-      <header className="rounded border border-slate-300 bg-white p-4">
+    <main className="mx-auto max-w-6xl px-3 py-4">
+      <header className={card}>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-xl font-bold">{c.patient.full_name}</h1>
+          <h1 className="text-xl font-bold md:text-2xl">{c.patient.full_name}</h1>
           {c.is_emergency && (
             <span className="rounded bg-red-700 px-2 py-0.5 text-xs font-semibold text-white">
               {t('board.emergency')}
             </span>
           )}
         </div>
-        <dl className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+        <div className="mt-2 flex flex-wrap gap-2 text-sm">
+          <Chip>{c.bed_label ? `${c.room_name}, ${c.bed_label}` : t('case.noBed')}</Chip>
+          <Chip>{t(`caseStatus.${c.status}`)}</Chip>
+          <Chip>
+            {c.procedure_label}
+            {c.side ? ` · ${t(`case.${c.side}`)}` : ''}
+          </Chip>
+          <Chip>
+            {formatDate(c.planned_surgery_date)}
+            {c.planned_surgery_time ? ` ${c.planned_surgery_time.slice(0, 5)}` : ''}
+          </Chip>
+        </div>
+        <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1 text-sm text-slate-700 sm:grid-cols-2 lg:grid-cols-4">
           <Field label={t('case.birth')} value={formatDate(c.patient.birth_date)} />
           <Field
             label={t('case.sex')}
@@ -85,235 +118,268 @@ export function CasePage() {
           />
           <Field label={t('case.mrn')} value={c.patient.medical_record_number} />
           <Field label={t('case.doctor')} value={c.treating_doctor.full_name} />
-          <Field
-            label={t('case.bed')}
-            value={c.bed_label ? `${c.room_name}, ${c.bed_label}` : t('case.noBed')}
-          />
-          <Field label={t('case.procedure')} value={c.procedure_label} />
-          <Field label={t('case.side')} value={c.side ? t(`case.${c.side}`) : '—'} />
-          <Field label={t('case.planned')} value={formatDate(c.planned_surgery_date)} />
-          <Field label="Статус" value={t(`caseStatus.${c.status}`)} />
         </dl>
-        <p
-          className={`mt-3 rounded p-2 text-sm font-semibold ${
-            c.readiness.ready ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900'
-          }`}
+        <div
+          className={`mt-3 rounded-lg p-3 ${c.readiness.ready ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900'}`}
         >
-          {c.readiness.ready ? `✔ ${t('case.readyYes')}` : `✖ ${t('case.readyNo')}`}
-          {!c.readiness.ready && (
+          <div className="flex items-center justify-between gap-2 text-sm font-semibold">
+            <span>{c.readiness.ready ? `✔ ${t('case.readyYes')}` : `✖ ${t('case.readyNo')}`}</span>
             <span className="font-normal">
-              {' '}
-              — {t('board.missing')}:{' '}
+              {done}/{applicable.length}
+            </span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/70" aria-hidden>
+            <div
+              className={`h-full rounded-full ${c.readiness.ready ? 'bg-green-600' : 'bg-red-600'}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          {!c.readiness.ready && (
+            <p className="mt-2 text-sm">
+              {t('board.missing')}:{' '}
               {c.readiness.blocking
                 .map((k) => columns.find((col) => col.key === k)?.short_label_ru ?? k)
                 .join(', ')}
-            </span>
+            </p>
           )}
-        </p>
+        </div>
         {c.override_reason && <p className="mt-2 text-sm text-amber-900">{c.override_reason}</p>}
       </header>
 
-      <nav className="mt-4 flex flex-wrap gap-2" aria-label="Разделы карточки">
+      <nav
+        className="-mx-3 mt-3 flex gap-2 overflow-x-auto px-3 pb-1"
+        aria-label="Разделы карточки"
+      >
         <Link
           to={`/case/${c.id}/intake`}
-          className="inline-flex min-h-11 items-center rounded bg-teal-700 px-4 text-sm font-medium text-white"
+          className={`${linkBtn} border-teal-700 bg-teal-700 text-white`}
         >
           {t('case.intake')}
         </Link>
         <Link
           to={`/case/${c.id}/documents`}
-          className="inline-flex min-h-11 items-center rounded border border-teal-800 px-4 text-sm font-medium text-teal-900"
+          className={`${linkBtn} border-teal-700 bg-white text-teal-900`}
         >
           {t('case.documents')}
         </Link>
         <Link
-          to={`/case/${c.id}/label`}
-          className="inline-flex min-h-11 items-center rounded border border-slate-400 px-4 text-sm font-medium"
-        >
-          {t('label.open')}
-        </Link>
-        <Link
           to={`/case/${c.id}/postop`}
-          className="inline-flex min-h-11 items-center rounded border border-teal-800 px-4 text-sm font-medium text-teal-900"
+          className={`${linkBtn} border-teal-700 bg-white text-teal-900`}
         >
           {t('case.postop')}
         </Link>
+        <Link
+          to={`/case/${c.id}/label`}
+          className={`${linkBtn} border-slate-300 bg-white text-slate-800`}
+        >
+          {t('label.open')}
+        </Link>
       </nav>
 
-      <StatusPanel detail={c} />
+      <div className="grid gap-x-4 lg:grid-cols-2">
+        <div>
+          <section className={`mt-4 ${card}`} aria-labelledby="chk">
+            <h2 id="chk" className="text-lg font-semibold">
+              {t('case.checklist')}
+            </h2>
+            <ul className="mt-2 divide-y divide-slate-100">
+              {orderedItems.map((item) => {
+                const col = columns.find((d) => d.key === item.key)
+                const blocking = c.readiness.blocking.includes(item.key)
+                const touched = item.status !== 'not_started'
+                return (
+                  <li key={item.key}>
+                    <button
+                      type="button"
+                      onClick={() => setEditingKey(item.key)}
+                      className="flex min-h-12 w-full items-center gap-3 rounded-lg px-1 py-1 text-left hover:bg-slate-50"
+                    >
+                      <StatusIcon status={item.status} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium">
+                          {col?.label_ru ?? item.key}
+                        </span>
+                        <span className="block text-xs text-slate-600">
+                          {t(`itemStatus.${item.status}`)}
+                          {item.note ? ` — ${item.note}` : ''}
+                          {touched && item.updated_by
+                            ? ` · ${item.updated_by}, ${formatDateTime(item.updated_at)}`
+                            : ''}
+                        </span>
+                      </span>
+                      {blocking && (
+                        <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-900">
+                          {t('case.blocking')}
+                        </span>
+                      )}
+                      <span aria-hidden className="text-slate-400">
+                        ›
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
 
-      <OrdersPanel
-        caseId={c.id}
-        canCreate={user.role === 'doctor' || user.role === 'head_of_department'}
-      />
+          {c.can_edit && (
+            <section className={`mt-4 ${card}`} aria-labelledby="params">
+              <h2 id="params" className="text-lg font-semibold">
+                {t('case.params')}
+              </h2>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <label className="grid gap-1 text-sm font-medium">
+                  {t('case.planned')}
+                  <input
+                    type="date"
+                    defaultValue={c.planned_surgery_date ?? ''}
+                    onChange={(e) =>
+                      update.mutate({ planned_surgery_date: e.target.value || null })
+                    }
+                    className="min-h-11 rounded-lg border border-slate-300 px-2"
+                  />
+                </label>
+                <label className="grid gap-1 text-sm font-medium">
+                  {t('case.plannedTime')}
+                  <input
+                    type="time"
+                    defaultValue={c.planned_surgery_time?.slice(0, 5) ?? ''}
+                    onChange={(e) =>
+                      update.mutate({
+                        planned_surgery_time: e.target.value ? `${e.target.value}:00` : null,
+                      })
+                    }
+                    className="min-h-11 rounded-lg border border-slate-300 px-2"
+                  />
+                </label>
+              </div>
+              <label className="mt-2 flex min-h-11 items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5"
+                  checked={c.takes_anticoagulant}
+                  onChange={(e) => update.mutate({ takes_anticoagulant: e.target.checked })}
+                />
+                {t('case.anticoag')}
+              </label>
+              <label className="flex min-h-11 items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5"
+                  checked={c.is_emergency}
+                  onChange={(e) => update.mutate({ is_emergency: e.target.checked })}
+                />
+                {t('case.emergency')}
+              </label>
+            </section>
+          )}
 
-      <section className="mt-4 rounded border border-slate-300 bg-white p-4" aria-labelledby="chk">
-        <h2 id="chk" className="text-lg font-semibold">
-          {t('case.checklist')}
-        </h2>
-        <ul className="mt-2 divide-y divide-slate-200">
-          {c.items.map((item) => {
-            const col = columns.find((d) => d.key === item.key)
-            return (
-              <li key={item.key} className="flex items-center gap-3 py-1">
+          <section className={`mt-4 ${card}`} aria-labelledby="labs">
+            <h2 id="labs" className="text-lg font-semibold">
+              {t('case.labs')}
+            </h2>
+            <ul className="mt-2 divide-y divide-slate-100 text-sm">
+              {labs.data?.map((l) => (
+                <li key={l.id} className="py-1.5">
+                  <strong>{labName(l.lab_code)}</strong>: {l.result_text}
+                  <span className="block text-xs text-slate-600">
+                    {formatDateTime(l.collected_at)}
+                    {l.valid_until ? ` · до ${formatDate(l.valid_until)}` : ''}
+                  </span>
+                </li>
+              ))}
+              {labs.data?.length === 0 && (
+                <li className="py-1 text-slate-600">{t('common.none')}</li>
+              )}
+            </ul>
+            {canWriteRecords(user.role) && (
+              <form
+                className="mt-3 grid gap-2 sm:grid-cols-[1fr_2fr_auto]"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (labText.trim()) {
+                    addLab.mutate({ lab_code: labCode, result_text: labText.trim() })
+                    setLabText('')
+                  }
+                }}
+              >
+                <select
+                  aria-label={t('case.labCode')}
+                  value={labCode}
+                  onChange={(e) => setLabCode(e.target.value)}
+                  className="min-h-11 rounded-lg border border-slate-300 bg-white px-2"
+                >
+                  {(defs.data?.labs ?? []).map((lab) => (
+                    <option key={lab.code} value={lab.code}>
+                      {lab.name_ru}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  aria-label={t('case.labResult')}
+                  value={labText}
+                  onChange={(e) => setLabText(e.target.value)}
+                  maxLength={2000}
+                  className="min-h-11 rounded-lg border border-slate-300 px-2"
+                  placeholder={t('case.labResult')}
+                />
+                <button type="submit" className="min-h-11 rounded-lg bg-teal-700 px-4 text-white">
+                  {t('case.addLab')}
+                </button>
+              </form>
+            )}
+          </section>
+
+          {canWriteRecords(user.role) && (
+            <section className={`mt-4 ${card}`}>
+              <h2 className="text-lg font-semibold">{t('case.consents')}</h2>
+              <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setEditingKey(item.key)}
-                  className="inline-flex min-h-11 flex-1 items-center gap-3 text-left"
+                  className="min-h-11 rounded-lg border border-slate-300 px-3"
+                  onClick={() => consent.mutate('surgical')}
                 >
-                  <StatusIcon status={item.status} />
-                  <span>
-                    <span className="block text-sm font-medium">{col?.label_ru ?? item.key}</span>
-                    <span className="block text-xs text-slate-600">
-                      {t(`itemStatus.${item.status}`)}
-                      {item.note ? ` — ${item.note}` : ''}
-                      {item.updated_by
-                        ? ` · ${item.updated_by}, ${formatDateTime(item.updated_at)}`
-                        : ''}
-                    </span>
-                  </span>
+                  {t('case.recordConsent')}: {t('case.surgical')}
                 </button>
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-
-      {c.can_edit && (
-        <section className="mt-4 rounded border border-slate-300 bg-white p-4">
-          <label className="flex min-h-11 items-center gap-3">
-            <input
-              type="checkbox"
-              className="h-5 w-5"
-              checked={c.takes_anticoagulant}
-              onChange={(e) => update.mutate({ takes_anticoagulant: e.target.checked })}
-            />
-            {t('case.anticoag')}
-          </label>
-          <label className="mt-2 flex min-h-11 items-center gap-3">
-            <input
-              type="checkbox"
-              className="h-5 w-5"
-              checked={c.is_emergency}
-              onChange={(e) => update.mutate({ is_emergency: e.target.checked })}
-            />
-            {t('case.emergency')}
-          </label>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <label className="grid gap-1 text-sm font-medium">
-              {t('case.planned')}
-              <input
-                type="date"
-                defaultValue={c.planned_surgery_date ?? ''}
-                onChange={(e) => update.mutate({ planned_surgery_date: e.target.value || null })}
-                className="min-h-11 rounded border border-slate-400 px-2"
-              />
-            </label>
-            <label className="grid gap-1 text-sm font-medium">
-              {t('case.plannedTime')}
-              <input
-                type="time"
-                defaultValue={c.planned_surgery_time?.slice(0, 5) ?? ''}
-                onChange={(e) =>
-                  update.mutate({
-                    planned_surgery_time: e.target.value ? `${e.target.value}:00` : null,
-                  })
-                }
-                className="min-h-11 rounded border border-slate-400 px-2"
-              />
-            </label>
-          </div>
-        </section>
-      )}
-
-      <section className="mt-4 rounded border border-slate-300 bg-white p-4" aria-labelledby="labs">
-        <h2 id="labs" className="text-lg font-semibold">
-          {t('case.labs')}
-        </h2>
-        <ul className="mt-2 text-sm">
-          {labs.data?.map((l) => (
-            <li key={l.id} className="border-b border-slate-100 py-1">
-              <strong>{l.lab_code}</strong>: {l.result_text} · {formatDateTime(l.collected_at)}
-              {l.valid_until ? ` · до ${formatDate(l.valid_until)}` : ''}
-            </li>
-          ))}
-          {labs.data?.length === 0 && <li className="text-slate-600">{t('common.none')}</li>}
-        </ul>
-        {canWriteRecords(user.role) && (
-          <form
-            className="mt-3 grid gap-2 sm:grid-cols-[1fr_2fr_auto]"
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (labText.trim()) {
-                addLab.mutate({ lab_code: labCode, result_text: labText.trim() })
-                setLabText('')
-              }
-            }}
-          >
-            <select
-              aria-label={t('case.labCode')}
-              value={labCode}
-              onChange={(e) => setLabCode(e.target.value)}
-              className="min-h-11 rounded border border-slate-400 bg-white px-2"
-            >
-              {['hbsag', 'anti_hcv', 'rw', 'hiv', 'cbc', 'blood_group_rh'].map((code) => (
-                <option key={code} value={code}>
-                  {code}
-                </option>
-              ))}
-            </select>
-            <input
-              aria-label={t('case.labResult')}
-              value={labText}
-              onChange={(e) => setLabText(e.target.value)}
-              maxLength={2000}
-              className="min-h-11 rounded border border-slate-400 px-2"
-              placeholder={t('case.labResult')}
-            />
-            <button type="submit" className="min-h-11 rounded bg-teal-700 px-4 text-white">
-              {t('case.addLab')}
-            </button>
-          </form>
-        )}
-      </section>
-
-      {canWriteRecords(user.role) && (
-        <section className="mt-4 rounded border border-slate-300 bg-white p-4">
-          <h2 className="text-lg font-semibold">{t('case.consents')}</h2>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="min-h-11 rounded border border-slate-400 px-3"
-              onClick={() => consent.mutate('surgical')}
-            >
-              {t('case.recordConsent')}: {t('case.surgical')}
-            </button>
-            <button
-              type="button"
-              className="min-h-11 rounded border border-slate-400 px-3"
-              onClick={() => consent.mutate('anaesthesia')}
-            >
-              {t('case.recordConsent')}: {t('case.anaesthesiaConsent')}
-            </button>
-          </div>
-          {consent.isSuccess && (
-            <p role="status" className="mt-2 text-sm text-green-800">
-              {t('case.saved')}
-            </p>
+                <button
+                  type="button"
+                  className="min-h-11 rounded-lg border border-slate-300 px-3"
+                  onClick={() => consent.mutate('anaesthesia')}
+                >
+                  {t('case.recordConsent')}: {t('case.anaesthesiaConsent')}
+                </button>
+              </div>
+              {consent.isSuccess && (
+                <p role="status" className="mt-2 text-sm text-green-800">
+                  {t('case.saved')}
+                </p>
+              )}
+            </section>
           )}
-        </section>
-      )}
+        </div>
 
-      {(user.role === 'anaesthesiologist' || user.role === 'head_of_department') && (
-        <AnaesthesiaForm caseId={c.id} type={c.anaesthesia_type} remarks={c.anaesthesia_remarks} />
-      )}
-      {user.role !== 'anaesthesiologist' &&
-        user.role !== 'head_of_department' &&
-        c.anaesthesia_type && (
-          <p className="mt-4 rounded border border-slate-300 bg-white p-3 text-sm">
-            {t('case.anaesthesiaType')}: <strong>{c.anaesthesia_type}</strong>
-          </p>
-        )}
+        <div>
+          <StatusPanel detail={c} />
+          <OrdersPanel
+            caseId={c.id}
+            canCreate={user.role === 'doctor' || user.role === 'head_of_department'}
+          />
+          {(user.role === 'anaesthesiologist' || user.role === 'head_of_department') && (
+            <AnaesthesiaForm
+              caseId={c.id}
+              type={c.anaesthesia_type}
+              remarks={c.anaesthesia_remarks}
+            />
+          )}
+          {user.role !== 'anaesthesiologist' &&
+            user.role !== 'head_of_department' &&
+            c.anaesthesia_type && (
+              <p className={`mt-4 ${card} text-sm`}>
+                {t('case.anaesthesiaType')}: <strong>{c.anaesthesia_type}</strong>
+              </p>
+            )}
+        </div>
+      </div>
 
       {editingKey && editingItem && (
         <ChecklistEditor
@@ -331,6 +397,10 @@ export function CasePage() {
       )}
     </main>
   )
+}
+
+function Chip({ children }: { children: React.ReactNode }) {
+  return <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-800">{children}</span>
 }
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -364,7 +434,10 @@ function AnaesthesiaForm({
     onSuccess: (data) => queryClient.setQueryData(['case', caseId], data),
   })
   return (
-    <section className="mt-4 rounded border border-slate-300 bg-white p-4" aria-labelledby="an">
+    <section
+      className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      aria-labelledby="an"
+    >
       <h2 id="an" className="text-lg font-semibold">
         {t('case.anaesthesia')}
       </h2>

@@ -249,3 +249,18 @@
   ✔/✖ (shape and text, not colour alone), free beds as «свободно», and opens the case on click or
   Enter. The demo seed now places its cases in these rooms. The old placeholder ward («Пал. 1-4»)
   stays in existing databases; deactivate its beds if it is not needed.
+
+## UX pass
+- Phone shell: a 56 px sticky header (brand, notifications, logout) and a bottom tab bar with the
+  four main sections plus «Меню» for the rest; the tab bar is hidden on pages with their own action
+  bar (intake, post-op). Desktop keeps the inline navigation.
+- Board on phones: one card per patient (room/bed, initials, status, readiness progress and a 4-column
+  grid of checklist items, blocking ones tinted) instead of the wide table; filters are a scrollable
+  chip row; a summary line shows totals. Tables stay on tablets and desktops.
+- Case page: header with chips and a readiness progress bar; two columns on wide screens (checklist,
+  parameters, labs, consents | status, orders); blocking items listed first with a «блокирует»
+  badge; "who/when" shown only for items someone has touched; lab names instead of codes; the order
+  form is folded behind «+ Новое назначение».
+- Intake: sticky chip navigation to the 16 sections replaces the dropdown.
+- Toast confirmations for checklist saves, status changes, case parameter edits, labs and consents.
+- Browser tests now find cases by `data-case-row`, so they work with both the table and the cards.

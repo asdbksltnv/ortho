@@ -10,7 +10,7 @@ export function DemoBanner() {
   return (
     <div
       role="alert"
-      className="bg-amber-300 px-4 py-2 text-center text-sm font-semibold text-black"
+      className="bg-amber-300 px-3 py-1 text-center text-xs font-semibold text-black md:py-2 md:text-sm"
     >
       {t('demo.banner')}
     </div>

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api/client'
 import type { CaseDetail, CaseStatus, Definitions, StatusEvent } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
+import { useToast } from './Toast'
 import { formatDate, formatDateTime } from '../lib/format'
 
 const REVERSAL_LABEL: Partial<Record<CaseStatus, Partial<Record<CaseStatus, string>>>> = {
@@ -17,6 +18,7 @@ export function StatusPanel({ detail }: { detail: CaseDetail }) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const queryClient = useQueryClient()
+  const toast = useToast()
   const [pending, setPending] = useState<Pending>(null)
   const [reason, setReason] = useState('')
   const [date, setDate] = useState(detail.planned_surgery_date ?? '')
@@ -43,6 +45,7 @@ export function StatusPanel({ detail }: { detail: CaseDetail }) {
       setPending(null)
       setReason('')
       setError(null)
+      toast(t('flow.toastDone'))
     },
     onError: (e) => setError(e instanceof ApiError ? e.message : t('errors.unknown')),
   })
@@ -78,7 +81,10 @@ export function StatusPanel({ detail }: { detail: CaseDetail }) {
   const callBlocked = pending?.target === 'called_to_or' && !isHead
 
   return (
-    <section className="mt-4 rounded border border-slate-300 bg-white p-4" aria-labelledby="flow">
+    <section
+      className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      aria-labelledby="flow"
+    >
       <h2 id="flow" className="text-lg font-semibold">
         {t('flow.title')}
       </h2>

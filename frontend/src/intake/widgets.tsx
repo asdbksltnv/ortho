@@ -17,7 +17,7 @@ export function Section({
     <section
       id={id}
       aria-labelledby={`${id}-h`}
-      className="scroll-mt-24 rounded border border-slate-300 bg-white p-3"
+      className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
     >
       <h2 id={`${id}-h`} className="text-base font-bold text-slate-900">
         {number}. {title}

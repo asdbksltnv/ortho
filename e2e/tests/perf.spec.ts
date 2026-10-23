@@ -19,7 +19,7 @@ async function throttle(page: Page) {
 async function timeBoard(page: Page): Promise<number> {
   const started = Date.now()
   await page.goto('/')
-  await expect(page.locator('tbody tr[data-row-case], tbody tr').nth(60)).toBeVisible({ timeout: 10_000 })
+  await expect(page.locator('[data-case-row]')).toHaveCount(60, { timeout: 10_000 })
   return Date.now() - started
 }
 
@@ -36,7 +36,7 @@ test('the board with 60 active cases loads within 1.5 s on a throttled mid-range
 
   // Repeat visit: app shell already cached by the service worker / HTTP cache
   await second.goto('/')
-  await expect(second.locator('tbody tr').nth(60)).toBeVisible()
+  await expect(second.locator('[data-case-row]')).toHaveCount(60)
   await throttle(second)
   const warm = await timeBoard(second)
   console.log(`warm board load: ${warm} ms`)

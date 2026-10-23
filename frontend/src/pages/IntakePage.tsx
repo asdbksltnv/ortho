@@ -66,41 +66,43 @@ export function IntakePage() {
   const readOnly = !sync.meta.canEdit
 
   return (
-    <main className="mx-auto max-w-3xl px-3 pb-28 pt-3">
+    <main className="mx-auto max-w-3xl px-3 pb-32 pt-3">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="mr-auto text-xl font-bold">{t('title')}</h1>
+        <h1 className="mr-auto w-full text-xl font-bold sm:w-auto">{t('title')}</h1>
         <Link
           to={`/case/${id}`}
-          className="min-h-11 rounded border border-slate-400 px-3 py-2 text-sm"
+          className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm"
         >
           {t('actions.toCase')}
         </Link>
         <Link
           to={`/case/${id}/documents`}
-          className="min-h-11 rounded border border-slate-400 px-3 py-2 text-sm"
+          className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm"
         >
           {t('actions.documents')}
         </Link>
       </div>
 
-      <label className="mt-3 flex min-w-0 items-center gap-2 text-sm">
-        <span className="text-slate-700">{t('actions.jump')}</span>
-        <select
-          className="min-h-11 w-0 min-w-0 flex-1 rounded border border-slate-400 bg-white px-2"
-          defaultValue=""
-          onChange={(e) => {
-            document.getElementById(e.target.value)?.scrollIntoView({ behavior: 'smooth' })
-            e.target.value = ''
-          }}
-        >
-          <option value="" />
-          {Array.from({ length: 16 }, (_, i) => (
-            <option key={i} value={`s${i + 1}`}>
-              {i + 1}. {t(`sections.s${i + 1}`)}
-            </option>
-          ))}
-        </select>
-      </label>
+      <nav
+        aria-label={t('actions.jump')}
+        className="sticky top-14 z-20 -mx-3 mt-3 flex gap-1.5 overflow-x-auto bg-slate-50/95 px-3 py-2 backdrop-blur"
+      >
+        {Array.from({ length: 16 }, (_, i) => (
+          <a
+            key={i}
+            href={`#s${i + 1}`}
+            onClick={(e) => {
+              e.preventDefault()
+              document
+                .getElementById(`s${i + 1}`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+            className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-slate-300 bg-white px-3 text-xs font-medium text-slate-800 hover:border-teal-700"
+          >
+            {i + 1}. {t(`sections.s${i + 1}`).split(/[ ,]/)[0]}
+          </a>
+        ))}
+      </nav>
 
       {readOnly && (
         <p className="mt-3 rounded bg-slate-100 p-2 text-sm text-slate-800">
@@ -169,14 +171,14 @@ export function IntakePage() {
             <>
               <button
                 type="button"
-                className="ml-auto min-h-11 rounded border border-slate-400 px-4 text-sm"
+                className="ml-auto min-h-11 rounded-lg border border-slate-300 px-4 text-sm"
                 onClick={() => void sync.syncNow()}
               >
                 {t('actions.saveNow')}
               </button>
               <button
                 type="button"
-                className="min-h-11 rounded bg-teal-700 px-4 text-sm font-medium text-white"
+                className="min-h-11 rounded-lg bg-teal-700 px-4 text-sm font-medium text-white"
                 onClick={() => void sync.syncNow(true)}
               >
                 {t('actions.complete')}

@@ -59,6 +59,7 @@ export interface BoardRow {
   treating_doctor_name: string
   ready: boolean
   blocking: string[]
+  applicable_count?: number
   override_reason: string | null
   items: Record<string, BoardItem>
 }
@@ -98,7 +99,7 @@ export interface CaseDetail {
   admitted_at: string
   override_reason: string | null
   items: CaseItem[]
-  readiness: { ready: boolean; blocking: string[] }
+  readiness: { ready: boolean; blocking: string[]; applicable?: string[] }
   can_edit: boolean
   available_transitions: CaseStatus[]
 }
@@ -128,6 +129,7 @@ export interface Ward {
 export interface Definitions {
   checklist: ColumnDef[]
   procedures: { id: string; label_ru: string }[]
+  labs?: { code: string; name_ru: string }[]
 }
 
 export interface ConfigFile {

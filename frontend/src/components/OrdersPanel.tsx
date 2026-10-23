@@ -159,94 +159,99 @@ export function OrdersPanel({ caseId, canCreate }: { caseId: string; canCreate: 
       </ul>
 
       {canCreate && (
-        <div className="mt-4 grid gap-3 border-t border-slate-200 pt-3">
-          <label className="grid gap-1 text-sm font-medium">
-            {t('orders.assignee')}
-            <select
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              className="min-h-11 rounded border border-slate-400 bg-white px-2"
-            >
-              <option value="" />
-              {staff.data?.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.full_name} · {t(`roles.${s.role}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div>
-            <p className="text-sm font-medium">{t('orders.sets')}</p>
-            <div className="mt-1 flex flex-wrap gap-2">
-              {sets.data?.map((s) => (
-                <button
-                  key={s.key}
-                  type="button"
-                  disabled={!assignee || fromSet.isPending}
-                  onClick={() => fromSet.mutate(s.key)}
-                  className="min-h-11 rounded border border-teal-800 px-3 text-sm disabled:opacity-50"
-                >
-                  {s.name_ru}
-                </button>
-              ))}
+        <details className="group mt-4 border-t border-slate-200 pt-3">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border border-dashed border-teal-700 font-medium text-teal-900 group-open:mb-3">
+            + {t('orders.add')}
+          </summary>
+          <div className="grid gap-3">
+            <label className="grid gap-1 text-sm font-medium">
+              {t('orders.assignee')}
+              <select
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+                className="min-h-11 rounded border border-slate-400 bg-white px-2"
+              >
+                <option value="" />
+                {staff.data?.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.full_name} · {t(`roles.${s.role}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div>
+              <p className="text-sm font-medium">{t('orders.sets')}</p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {sets.data?.map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    disabled={!assignee || fromSet.isPending}
+                    onClick={() => fromSet.mutate(s.key)}
+                    className="min-h-11 rounded border border-teal-800 px-3 text-sm disabled:opacity-50"
+                  >
+                    {s.name_ru}
+                  </button>
+                ))}
+              </div>
             </div>
+            <form
+              className="grid gap-2"
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (assignee && item.trim()) create.mutate()
+              }}
+            >
+              <div role="radiogroup" aria-label={t('orders.type')} className="flex flex-wrap gap-2">
+                {ORDER_TYPES.map((o) => (
+                  <button
+                    key={o}
+                    type="button"
+                    role="radio"
+                    aria-checked={type === o}
+                    onClick={() => setType(o)}
+                    className={`min-h-11 rounded border px-3 text-sm ${type === o ? 'border-teal-800 bg-teal-700 text-white' : 'border-slate-400'}`}
+                  >
+                    {t(`orders.types.${o}`)}
+                  </button>
+                ))}
+              </div>
+              <input
+                aria-label={t('orders.item')}
+                placeholder={t('orders.item')}
+                value={item}
+                maxLength={300}
+                onChange={(e) => setItem(e.target.value)}
+                className="min-h-11 rounded border border-slate-400 px-3"
+              />
+              <select
+                aria-label={t('orders.linked')}
+                value={linked}
+                onChange={(e) => setLinked(e.target.value)}
+                className="min-h-11 rounded border border-slate-400 bg-white px-2"
+              >
+                <option value="">{t('orders.linked')}: —</option>
+                {defs.data?.checklist.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.short_label_ru}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                disabled={!assignee || !item.trim() || create.isPending}
+                className="min-h-11 rounded bg-teal-700 px-4 font-medium text-white disabled:opacity-50"
+              >
+                {t('orders.add')}
+              </button>
+            </form>
+            {error && (
+              <p role="alert" className="text-sm text-red-700">
+                {error}
+              </p>
+            )}
           </div>
-          <form
-            className="grid gap-2"
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (assignee && item.trim()) create.mutate()
-            }}
-          >
-            <div role="radiogroup" aria-label={t('orders.type')} className="flex flex-wrap gap-2">
-              {ORDER_TYPES.map((o) => (
-                <button
-                  key={o}
-                  type="button"
-                  role="radio"
-                  aria-checked={type === o}
-                  onClick={() => setType(o)}
-                  className={`min-h-11 rounded border px-3 text-sm ${type === o ? 'border-teal-800 bg-teal-700 text-white' : 'border-slate-400'}`}
-                >
-                  {t(`orders.types.${o}`)}
-                </button>
-              ))}
-            </div>
-            <input
-              aria-label={t('orders.item')}
-              placeholder={t('orders.item')}
-              value={item}
-              maxLength={300}
-              onChange={(e) => setItem(e.target.value)}
-              className="min-h-11 rounded border border-slate-400 px-3"
-            />
-            <select
-              aria-label={t('orders.linked')}
-              value={linked}
-              onChange={(e) => setLinked(e.target.value)}
-              className="min-h-11 rounded border border-slate-400 bg-white px-2"
-            >
-              <option value="">{t('orders.linked')}: —</option>
-              {defs.data?.checklist.map((c) => (
-                <option key={c.key} value={c.key}>
-                  {c.short_label_ru}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              disabled={!assignee || !item.trim() || create.isPending}
-              className="min-h-11 rounded bg-teal-700 px-4 font-medium text-white disabled:opacity-50"
-            >
-              {t('orders.add')}
-            </button>
-          </form>
-          {error && (
-            <p role="alert" className="text-sm text-red-700">
-              {error}
-            </p>
-          )}
-        </div>
+        </details>
       )}
     </section>
   )

@@ -5,6 +5,7 @@ import { api, ApiError } from '../api/client'
 import type { CaseDetail, ItemStatus } from '../api/types'
 import { formatDateTime } from '../lib/format'
 import { StatusIcon } from './StatusIcon'
+import { useToast } from './Toast'
 
 const STATUSES: ItemStatus[] = ['not_started', 'pending', 'done', 'problem', 'not_applicable']
 
@@ -30,6 +31,7 @@ interface Conflict {
 export function ChecklistEditor(props: Props) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const toast = useToast()
   const [status, setStatus] = useState<ItemStatus>(props.status)
   const [note, setNote] = useState(props.note ?? '')
   const [conflict, setConflict] = useState<Conflict | null>(null)
@@ -44,6 +46,7 @@ export function ChecklistEditor(props: Props) {
     onSuccess: (updated) => {
       queryClient.setQueryData(['case', props.caseId], updated)
       void queryClient.invalidateQueries({ queryKey: ['board'] })
+      toast(t('case.toastSaved'))
       props.onClose()
     },
     onError: (error) => {

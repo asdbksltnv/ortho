@@ -69,6 +69,7 @@ def build_board(
                 treating_doctor_name=case.treating_doctor.full_name,
                 ready=readiness.ready,
                 blocking=list(readiness.blocking),
+                applicable_count=len(readiness.applicable),
                 override_reason=case.override_reason,
                 items={
                     i.key: BoardItem(

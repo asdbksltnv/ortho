@@ -112,7 +112,7 @@ test('doctor completes a TKA intake on a 360 px screen, generates T1 and copies 
 test('the intake form keeps working offline and syncs when the connection returns', async ({ page, context }) => {
   await login(page, 'doctor1')
   await page.goto('/')
-  const link = page.locator('tbody a').first()
+  const link = page.locator('[data-case-row] a').first()
   await link.click()
   await page.getByRole('link', { name: 'Форма приёма' }).click()
   await expect(page.getByTestId('sync-status')).toHaveAttribute('data-state', 'saved')

@@ -87,10 +87,14 @@ def test_tka_becomes_ready_only_when_always_and_procedure_items_done(
     _mark_all_done(api, case_id, always)
     api.as_role(Role.DOCTOR)
     body = api.get(f"/cases/{case_id}").json()
-    assert body["readiness"] == {"ready": False, "blocking": ["blood_reserve", "implant"]}
+    assert body["readiness"]["ready"] is False
+    assert body["readiness"]["blocking"] == ["blood_reserve", "implant"]
+    assert len(body["readiness"]["applicable"]) == 7
     _mark_all_done(api, case_id, ["blood_reserve", "implant"])
     api.as_role(Role.DOCTOR)
-    assert api.get(f"/cases/{case_id}").json()["readiness"] == {"ready": True, "blocking": []}
+    readiness = api.get(f"/cases/{case_id}").json()["readiness"]
+    assert readiness["ready"] is True and readiness["blocking"] == []
+    assert api.get("/board").json()["rows"][0]["applicable_count"] == 7
 
 
 def test_arthroscopy_does_not_require_blood_or_implant(api: Api, world: dict[str, Any]) -> None:
