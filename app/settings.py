@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     storage_backend: Literal["disabled", "local", "s3"] = "disabled"
 
     frontend_dist: str = "frontend/dist"
+    config_dir: str = "config"
+    cookie_secure: bool | None = None  # default: True in production
+    login_max_failures: int = 5
+    login_window_min: int = 15
     log_level: str = "INFO"
 
     @field_validator("database_url")
@@ -46,6 +50,10 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.env == "production"
+
+    @property
+    def secure_cookies(self) -> bool:
+        return self.is_production if self.cookie_secure is None else self.cookie_secure
 
     @property
     def effective_storage_backend(self) -> str:

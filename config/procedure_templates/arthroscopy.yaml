@@ -1,0 +1,24 @@
+# TODO(clinical): all clinical text below is a placeholder until the department approves it.
+id: arthroscopy
+version: 1
+requires_clinical_validation: true
+label_ru: "Артроскопия"
+operation_name_ru: "Артроскопия"
+# Items with blocking: per_procedure that block readiness for this procedure.
+blocking_items: []
+optional_labs: []            # TODO(clinical)
+instrumental: []             # TODO(clinical)
+main_diagnosis:
+  icd10: null                # TODO(clinical)
+  text_ru: null              # TODO(clinical)
+defaults:
+  complaints: {}             # TODO(clinical)
+  local_status: {}           # TODO(clinical)
+  plan: {}                   # TODO(clinical)
+surgery_texts:               # TODO(clinical)
+  risks: null
+  tactics: null
+  technical_difficulties: null
+  likely_complications: null
+  prevention: null
+  expected_blood_loss: null

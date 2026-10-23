@@ -1,54 +1,35 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
-import type { Meta } from './api/client'
-
-const baseMeta: Meta = {
-  version: '0.1.0',
-  demo_mode: false,
-  session_timeout_min: 15,
-  decimal_separator: ',',
-  tz_display: 'Asia/Tashkent',
-}
-
-function mockMeta(meta: Meta) {
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(meta) }))
-}
-
-function renderApp() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>
-    </QueryClientProvider>,
-  )
-}
+import { baseMeta, mockApi, renderWithProviders } from './test/utils'
 
 afterEach(() => vi.unstubAllGlobals())
 
+const unauthenticated = { status: 401, body: { code: 'unauthorized', message: 'x', details: {} } }
+
 describe('App shell', () => {
-  it('renders the Russian home page', async () => {
-    mockMeta(baseMeta)
-    renderApp()
-    expect(await screen.findByText(/Каркас приложения запущен/)).toBeInTheDocument()
+  it('redirects anonymous users to the Russian login form', async () => {
+    mockApi({ 'GET /meta': baseMeta, 'GET /auth/me': () => unauthenticated })
+    renderWithProviders(<App />)
+    expect(await screen.findByRole('button', { name: 'Войти' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Логин')).toBeInTheDocument()
   })
 
-  it('shows the demo banner in demo mode', async () => {
-    mockMeta({ ...baseMeta, demo_mode: true })
-    renderApp()
+  it('shows the demo banner on every page in demo mode', async () => {
+    mockApi({
+      'GET /meta': { ...baseMeta, demo_mode: true },
+      'GET /auth/me': () => unauthenticated,
+    })
+    renderWithProviders(<App />)
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Демо-режим: не вводите реальные данные пациентов',
     )
   })
 
   it('hides the banner outside demo mode', async () => {
-    mockMeta(baseMeta)
-    renderApp()
-    await screen.findByText(/Каркас приложения запущен/)
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    mockApi({ 'GET /meta': baseMeta, 'GET /auth/me': () => unauthenticated })
+    renderWithProviders(<App />)
+    await screen.findByRole('button', { name: 'Войти' })
+    expect(screen.queryByText(/Демо-режим/)).not.toBeInTheDocument()
   })
 })

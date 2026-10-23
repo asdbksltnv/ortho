@@ -6,9 +6,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import __version__
-from app.api import health, meta
+from app.api import audit_routes, auth_routes, cases, health, meta, users, wards
+from app.api.errors import register_error_handlers
 from app.logging_config import configure_logging
 from app.security import security_headers
+from app.services.config_loader import get_config
 from app.settings import get_settings
 
 logger = logging.getLogger("app")
@@ -27,9 +29,12 @@ def create_app() -> FastAPI:
         openapi_url=None if settings.is_production else "/openapi.json",
     )
     app.middleware("http")(security_headers)
+    register_error_handlers(app)
+    get_config()  # fail fast on invalid clinical configuration
 
     app.include_router(health.router, prefix="/api")
-    app.include_router(meta.router, prefix="/api/v1")
+    for module in (meta, auth_routes, users, wards, cases, audit_routes):
+        app.include_router(module.router, prefix="/api/v1")
 
     _mount_frontend(app, Path(settings.frontend_dist))
     logger.info("startup env=%s demo_mode=%s", settings.env, settings.demo_mode)

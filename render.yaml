@@ -14,7 +14,7 @@ services:
     dockerfilePath: ./Dockerfile
     plan: starter
     healthCheckPath: /api/health
-    preDeployCommand: alembic upgrade head
+    preDeployCommand: python -m app.predeploy
     # No dockerCommand: the Dockerfile CMD starts uvicorn on $PORT (Render does not shell-parse this field).
     envVars:
       - key: ENV

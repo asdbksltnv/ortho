@@ -6,7 +6,8 @@ Traumatology, Akfa Medline University Hospital, Tashkent. UI in Russian (i18n re
 One deployable: FastAPI serves the built React app at `/` and the API at `/api/v1`.
 Health check: `/api/health`.
 
-**Status: Phase 0 (scaffold).** See DECISIONS.md for assumptions and open items.
+**Status: Phase 1 done (auth, roles, readiness board).** Phases 2-4 follow BUILD_PROMPT.md.
+See DECISIONS.md for assumptions and open items.
 
 ## Run with Docker
 

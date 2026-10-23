@@ -1,0 +1,11 @@
+# Lab catalogue. validity_days is null until the department approves validity periods.
+version: 1
+requires_clinical_validation: true
+labs:
+  - {code: hbsag, name_ru: "HBsAg (HBV)", group: core, validity_days: null}   # TODO(clinical)
+  - {code: anti_hcv, name_ru: "anti-HCV", group: core, validity_days: null}   # TODO(clinical)
+  - {code: rw, name_ru: "RW", group: core, validity_days: null}               # TODO(clinical)
+  - {code: hiv, name_ru: "ВИЧ", group: core, validity_days: null}             # TODO(clinical)
+  - {code: cbc, name_ru: "ОАК", group: core, validity_days: null}             # TODO(clinical)
+  - {code: blood_group_rh, name_ru: "Группа крови и резус", group: core, validity_days: null}  # TODO(clinical)
+  # TODO(clinical): optional labs per procedure (group: optional) are not yet defined by the department.

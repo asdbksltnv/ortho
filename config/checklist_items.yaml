@@ -1,0 +1,65 @@
+# Readiness checklist (BUILD_PROMPT section 6.1).
+# blocking: always | per_procedure | if_applicable | day_of_surgery
+#   per_procedure   - blocks only for procedures listing the key in blocking_items
+#   if_applicable   - blocks when auto_applies_flag is set on the case, or someone has set the item
+#                     to pending/problem
+#   day_of_surgery  - blocks from the planned surgery date onwards
+version: 1
+requires_clinical_validation: true
+items:
+  - key: docs
+    label_ru: "Осмотр и документы (5)"
+    short_label_ru: "Документы"
+    owner_role: doctor
+    blocking: always
+  - key: labs_core
+    label_ru: "HBsAg, anti-HCV, RW, ВИЧ, ОАК, группа крови и резус"
+    short_label_ru: "Анализы"
+    owner_role: nurse
+    blocking: always
+  - key: labs_optional
+    label_ru: "Дополнительные анализы"
+    short_label_ru: "Доп. анализы"
+    owner_role: nurse
+    blocking: per_procedure
+  - key: consults
+    label_ru: "Консультации специалистов"
+    short_label_ru: "Консульт."
+    owner_role: doctor
+    blocking: if_applicable
+  - key: consent_surgical
+    label_ru: "Согласие на операцию"
+    short_label_ru: "Согласие"
+    owner_role: doctor
+    blocking: always
+  - key: anaesthesia
+    label_ru: "Согласие и допуск анестезиолога"
+    short_label_ru: "Анестез."
+    owner_role: anaesthesiologist
+    blocking: always
+  - key: antibiotic
+    label_ru: "Антибиотикопрофилактика назначена"
+    short_label_ru: "Антибиотик"
+    owner_role: doctor
+    blocking: always
+  - key: anticoag
+    label_ru: "Отмена / переход антикоагулянтов"
+    short_label_ru: "Антикоаг."
+    owner_role: doctor
+    blocking: if_applicable
+    auto_applies_flag: takes_anticoagulant
+  - key: site_marking
+    label_ru: "Маркировка места операции"
+    short_label_ru: "Маркировка"
+    owner_role: doctor
+    blocking: day_of_surgery
+  - key: blood_reserve
+    label_ru: "Резерв крови"
+    short_label_ru: "Кровь"
+    owner_role: nurse
+    blocking: per_procedure
+  - key: implant
+    label_ru: "Имплант и инструменты подтверждены"
+    short_label_ru: "Имплант"
+    owner_role: nurse
+    blocking: per_procedure
