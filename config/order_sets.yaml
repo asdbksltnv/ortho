@@ -1,0 +1,12 @@
+# Quick order sets for rounds. type: lab | imaging | consult | other
+version: 1
+requires_clinical_validation: true
+sets:
+  - key: control_xray
+    name_ru: "Контрольная рентгенография"
+    orders:
+      - {type: imaging, item: "Контрольная рентгенография"}
+  - key: repeat_cbc
+    name_ru: "Повторный ОАК"
+    orders:
+      - {type: lab, item: "ОАК"}

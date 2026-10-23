@@ -6,17 +6,22 @@ import { api, ApiError } from '../api/client'
 import type { DocumentDetail, DocumentField } from '../api/types'
 import { copyPayload, copyText } from '../lib/clipboard'
 
-const COPYABLE = (f: DocumentField) => copyPayload(f) !== null
+const COPYABLE = (f: DocumentField) => copyPayload(f) !== null && !f.locked
 
 export function DocumentPage() {
-  const { id = '', templateId = '' } = useParams()
+  const { id = '', templateId: routeTemplate, entryId } = useParams()
+  const templateId = routeTemplate ?? 't6_progress_note'
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const listRef = useRef<HTMLOListElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const key = ['doc', id, templateId]
-  const base = `/cases/${id}/documents/${templateId}`
+  const key = ['doc', id, templateId, entryId ?? '']
+  const base = entryId
+    ? `/cases/${id}/postop/${entryId}/document`
+    : `/cases/${id}/documents/${templateId}`
+  const fieldPath = (field: string) =>
+    entryId ? `${base}/fields/${field}/copied` : `${base}/fields/${field}/copied`
 
   const query = useQuery({ queryKey: key, queryFn: () => api.get<DocumentDetail>(base) })
   const setDoc = (doc: DocumentDetail) => {
@@ -54,7 +59,7 @@ export function DocumentPage() {
       )
       pending.current += 1
       queue.current = queue.current
-        .then(() => api.post<DocumentDetail>(`${base}/fields/${field}/copied`, { copied }))
+        .then(() => api.post<DocumentDetail>(fieldPath(field), { copied }))
         .catch(() => undefined)
         .finally(() => {
           pending.current -= 1
@@ -198,7 +203,7 @@ function FieldRow({
 }) {
   const { t } = useTranslation()
   const [ticked, setTicked] = useState<Set<string>>(new Set())
-  const canCopy = COPYABLE(field)
+  const canCopy = COPYABLE(field) && !field.locked
   const muted = field.display !== 'value'
 
   return (
@@ -332,6 +337,15 @@ function FieldRow({
               )
             )}
           </div>
+        )}
+        {field.locked && (
+          <p
+            role="status"
+            className="mt-2 text-sm font-semibold text-amber-900"
+            data-testid={`locked-${field.key}`}
+          >
+            {t('docs.locked')}
+          </p>
         )}
         {muted &&
           field.display === 'keep_emr' &&

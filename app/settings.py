@@ -35,6 +35,15 @@ class Settings(BaseSettings):
 
     storage_backend: Literal["disabled", "local", "s3"] = "disabled"
 
+    public_url: str = ""  # https URL of this deployment; used to register the Telegram webhook
+    scheduler_enabled: bool = False  # run the jobs in-process (development)
+    digest_time: str = "18:00"  # local time of the daily digest (TZ_DISPLAY)
+    postop_reminder_time: str = "12:00"  # reminder when no post-op entry exists by this time
+    ai_timeout_s: float = 20.0
+    storage_dir: str = "uploads"
+    s3_bucket: str = ""
+    s3_endpoint_url: str = ""
+    s3_region: str = ""
     frontend_dist: str = "frontend/dist"
     config_dir: str = "config"
     cookie_secure: bool | None = None  # default: True in production

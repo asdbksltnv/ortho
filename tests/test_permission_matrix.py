@@ -134,6 +134,7 @@ def ctx(api: Api, world: dict[str, Any], case_id: uuid.UUID, db: Any) -> dict[st
         ward_id = s.scalars(select(Ward.id)).first()
     return {
         "case": case_id,
+        "nurse": world["nurse"],
         "room": world["room"],
         "bed": world["beds"][1],
         "doctor": world["doctor"],

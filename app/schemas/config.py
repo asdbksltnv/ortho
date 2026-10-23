@@ -164,7 +164,7 @@ class DefaultsConfig(ConfigMeta):
 
 
 _SOURCE = re.compile(
-    r"^(form|generated|board|schedule|staff|skip|case|procedure|copy:[a-z0-9_]+\.[a-z0-9_]+)$"
+    r"^(form|generated|board|schedule|staff|skip|case|procedure|note|copy:[a-z0-9_]+\.[a-z0-9_]+)$"
 )
 
 
@@ -203,6 +203,7 @@ class EmrTemplateConfig(ConfigMeta):
     id: str
     title_ru: str
     status: str = "ready"  # ready | awaiting_template
+    scope: str = "case"  # case | postop_entry
     fields: list[EmrFieldConfig] = Field(default_factory=list)
     gating_items: list[str] = Field(default_factory=list)
 
@@ -214,4 +215,37 @@ class EmrTemplateConfig(ConfigMeta):
             status=self.status,
             fields=tuple(f.to_spec() for f in self.fields),
             gating_items=tuple(self.gating_items),
+            scope=self.scope,
         )
+
+
+class AlertThresholdsInner(_Strict):
+    temperature_max: float | None = None
+    drain_output_ml_max: int | None = None
+    pain_vas_max: int | None = None
+    purulent_discharge: bool | None = None
+
+
+class AlertThresholdsConfig(ConfigMeta):
+    thresholds: AlertThresholdsInner
+
+
+class AntibioticConfig(ConfigMeta):
+    """Empty until the department supplies its protocol; the `antibiotic` item stays manual."""
+
+    drugs: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class OrderTemplate(_Strict):
+    type: str
+    item: str
+
+
+class OrderSet(_Strict):
+    key: str
+    name_ru: str
+    orders: list[OrderTemplate]
+
+
+class OrderSetsConfig(ConfigMeta):
+    sets: list[OrderSet]

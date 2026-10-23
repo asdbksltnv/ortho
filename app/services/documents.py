@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from sqlalchemy import select
@@ -20,7 +21,7 @@ from app.domain.emr_facts import FactsInput, build_facts
 from app.domain.enums import AuditAction, ItemStatus, Role
 from app.domain.intake import IntakeData
 from app.models.base import utcnow
-from app.models.case import Case, GeneratedDocument
+from app.models.case import AiNoteDraft, Case, GeneratedDocument, PostOpEntry
 from app.models.user import User
 from app.services import audit
 from app.services.clock import local_today
@@ -76,8 +77,18 @@ def _studies(case: Case, config: AppConfig) -> list[str]:
     return studies
 
 
+def note_draft(session: Session, entry: PostOpEntry) -> AiNoteDraft | None:
+    return session.scalars(
+        select(AiNoteDraft).where(AiNoteDraft.postop_entry_id == entry.id)
+    ).one_or_none()
+
+
 def build_render_input(
-    session: Session, case: Case, config: AppConfig, author: CurrentUser
+    session: Session,
+    case: Case,
+    config: AppConfig,
+    author: CurrentUser,
+    entry: PostOpEntry | None = None,
 ) -> tuple[RenderInput, IntakeData]:
     data, _row = load_intake(session, case, config)
     settings = get_settings()
@@ -112,6 +123,16 @@ def build_render_input(
     schedule: datetime | None = None
     if case.planned_surgery_date and case.planned_surgery_time:
         schedule = datetime.combine(case.planned_surgery_date, case.planned_surgery_time)
+    notes: dict[str, str | None] = {}
+    approved = False
+    if entry is not None:
+        # T6: the examination time is the entry time, vitals come from the post-op form.
+        payload["postop"] = entry.data
+        schedule = entry.entered_at.astimezone(ZoneInfo(settings.tz_display)).replace(tzinfo=None)
+        draft = note_draft(session, entry)
+        if draft is not None:
+            notes = dict(draft.output)
+            approved = draft.approved_at is not None
 
     texts = template.surgery_texts.model_dump() if template else {}
     inp = RenderInput(
@@ -130,6 +151,8 @@ def build_render_input(
         case_values={"anaesthesia_type": case.anaesthesia_type},
         studies=facts["studies"],
         system_defaults={k: v.normal_ru for k, v in config.defaults.systems.items()},
+        notes=notes,
+        notes_approved=approved,
     )
     return inp, data
 
@@ -166,11 +189,20 @@ def spec_or_404(config: AppConfig, template_id: str) -> TemplateSpec:
 
 
 def _stored(
-    session: Session, case_id: uuid.UUID, template_id: str, *, lock: bool = False
+    session: Session,
+    case_id: uuid.UUID,
+    template_id: str,
+    *,
+    lock: bool = False,
+    entry_id: uuid.UUID | None = None,
 ) -> GeneratedDocument | None:
     stmt = select(GeneratedDocument).where(
         GeneratedDocument.case_id == case_id, GeneratedDocument.template_id == template_id
     )
+    if entry_id is None:
+        stmt = stmt.where(GeneratedDocument.postop_entry_id.is_(None))
+    else:
+        stmt = stmt.where(GeneratedDocument.postop_entry_id == entry_id)
     if lock:
         # Concurrent "copied" ticks rewrite the whole JSON list; serialise them on Postgres.
         stmt = stmt.with_for_update()
@@ -196,6 +228,7 @@ def generate(
     inp: RenderInput,
     user: CurrentUser,
     ip: str | None,
+    entry: PostOpEntry | None = None,
 ) -> GeneratedDocument:
     rendering = render_document(case, spec, inp)
     if rendering.problems:
@@ -205,20 +238,24 @@ def generate(
             "Документ нельзя создать: не хватает данных",
             {"problems": rendering.problems},
         )
-    existing = _stored(session, case.id, spec.id)
+    existing = _stored(session, case.id, spec.id, entry_id=entry.id if entry else None)
     previous = {f["key"]: f for f in existing.fields} if existing else {}
     new_fields: list[dict[str, Any]] = []
     for f in rendering.fields:
-        entry = f.to_dict()
+        row = f.to_dict()
         old = previous.get(f.key)
         # Keep the "copied" tick only for fields whose pasted value did not change.
-        entry["copied"] = bool(
+        row["copied"] = bool(
             old and old.get("copied") and _stored_comparable(old) == f.comparable()
         )
-        new_fields.append(entry)
+        new_fields.append(row)
     if existing is None:
         existing = GeneratedDocument(
-            case_id=case.id, template_id=spec.id, template_version=spec.version, fields=new_fields
+            case_id=case.id,
+            postop_entry_id=entry.id if entry else None,
+            template_id=spec.id,
+            template_version=spec.version,
+            fields=new_fields,
         )
         session.add(existing)
     else:
@@ -239,12 +276,24 @@ def generate(
     return existing
 
 
+def _with_locks(
+    fields: list[dict[str, Any]], spec: TemplateSpec, inp: RenderInput
+) -> list[dict[str, Any]]:
+    """Note-sourced fields stay locked (no copying) until the doctor presses «Проверено»."""
+    note_keys = {f.key for f in spec.fields if f.source == "note"}
+    return [{**f, "locked": f["key"] in note_keys and not inp.notes_approved} for f in fields]
+
+
 def document_state(
-    session: Session, case: Case, spec: TemplateSpec, inp: RenderInput
+    session: Session,
+    case: Case,
+    spec: TemplateSpec,
+    inp: RenderInput,
+    entry: PostOpEntry | None = None,
 ) -> dict[str, Any]:
     """Stored document + whether it is outdated against the current intake data."""
     rendering = render_document(case, spec, inp)
-    stored = _stored(session, case.id, spec.id)
+    stored = _stored(session, case.id, spec.id, entry_id=entry.id if entry else None)
     state: dict[str, Any] = {
         "template_id": spec.id,
         "title_ru": spec.title_ru,
@@ -267,7 +316,7 @@ def document_state(
         generated_at=stored.generated_at,
         is_outdated=outdated,
         changed_keys=keys,
-        fields=stored.fields,
+        fields=_with_locks(stored.fields, spec, inp),
     )
     return state
 
@@ -280,14 +329,19 @@ def set_copied(
     copied: bool,
     user: CurrentUser,
     ip: str | None,
+    entry: PostOpEntry | None = None,
+    notes_approved: bool = True,
 ) -> GeneratedDocument:
-    stored = _stored(session, case.id, spec.id, lock=True)
+    stored = _stored(session, case.id, spec.id, lock=True, entry_id=entry.id if entry else None)
     if stored is None:
         raise not_found("Документ")
     fields = [dict(f) for f in stored.fields]
     target = next((f for f in fields if f["key"] == key), None)
     if target is None:
         raise not_found("Поле")
+    is_note = any(f.key == key and f.source == "note" for f in spec.fields)
+    if is_note and not notes_approved:
+        raise ApiError(409, "note_not_approved", "Сначала проверьте текст и нажмите «Проверено»")
     target["copied"] = copied
     stored.fields = fields  # reassign so the JSON column change is detected
     if copied:
@@ -308,6 +362,8 @@ def all_text(fields: list[dict[str, Any]]) -> str:
     """Fallback «Скопировать всё одним текстом»: labelled plain text, in EMR order."""
     lines: list[str] = []
     for f in fields:
+        if f.get("locked"):
+            continue  # an unapproved draft is never put on the clipboard
         display = f["display"]
         if display == "value":
             if f.get("value"):

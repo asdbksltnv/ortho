@@ -21,6 +21,7 @@ export interface User {
   full_name: string
   role: Role
   is_active: boolean
+  telegram_linked?: boolean
 }
 
 export interface Staff {
@@ -99,6 +100,7 @@ export interface CaseDetail {
   items: CaseItem[]
   readiness: { ready: boolean; blocking: string[] }
   can_edit: boolean
+  available_transitions: CaseStatus[]
 }
 
 export interface Bed {
@@ -183,10 +185,126 @@ export interface DocumentField {
   hint: string | null
   missing: boolean
   copied: boolean
+  locked?: boolean
 }
 
 export interface DocumentDetail extends DocumentSummary {
   changed_keys: string[]
   fields: DocumentField[]
   all_text: string
+}
+
+export interface StatusEvent {
+  from_status: CaseStatus | null
+  to_status: CaseStatus
+  user_name: string | null
+  reason: string | null
+  is_override: boolean
+  created_at: string
+}
+
+export interface Order {
+  id: string
+  case_id: string
+  type: 'lab' | 'imaging' | 'consult' | 'other'
+  item: string
+  assignee_id: string
+  assignee_name: string
+  status: 'ordered' | 'in_progress' | 'result_available' | 'reviewed' | 'cancelled'
+  linked_checklist_key: string | null
+  created_at_round: boolean
+  created_at: string
+  case_label: string
+  next_statuses: string[]
+}
+
+export interface OrderSet {
+  key: string
+  name_ru: string
+  orders: { type: string; item: string }[]
+}
+
+export interface AppNotification {
+  id: string
+  event: string
+  text: string
+  case_id: string | null
+  created_at: string
+  read: boolean
+}
+
+export interface PostOpData {
+  complaints: string
+  pain_vas: number | null
+  consciousness: string | null
+  vitals: {
+    bp: string | null
+    pulse: number | null
+    rr: number | null
+    spo2: number | null
+    temp: number | null
+    cvp: number | null
+  }
+  wound: {
+    dressing: string | null
+    discharge: string | null
+    redness: boolean
+    swelling: boolean
+    sutures: string | null
+    dressing_changed: boolean
+  }
+  drain: { present: boolean; output_ml: number | null; removed: boolean }
+  neurovascular: { pulsation: string | null; sensation: string | null; motor: string | null }
+  calf_tenderness: boolean
+  mobilization: { level: string | null; weight_bearing: string | null; physiotherapy: boolean }
+  therapy: { antibiotic_day: number | null; vte_prophylaxis: boolean; analgesia: string }
+  recommendations: string
+  photo_key: string | null
+}
+
+export interface PostOpNote {
+  generator: string
+  general_condition: string
+  local_status: string
+  approved: boolean
+  approved_at: string | null
+  approved_by_name: string | null
+}
+
+export interface PostOpEntry {
+  id: string
+  case_id: string
+  entered_at: string
+  entry_date: string
+  post_op_day: number
+  data: PostOpData
+  alerts: string[]
+  note: PostOpNote | null
+  has_photo: boolean
+}
+
+export interface TrendPoint {
+  day: number
+  date: string
+  temp: number | null
+  drain_ml: number | null
+  pain: number | null
+  discharge: string | null
+  redness: boolean
+  swelling: boolean
+}
+
+export interface PostOpList {
+  entries: PostOpEntry[]
+  trends: TrendPoint[]
+  can_record: boolean
+  can_edit: boolean
+  photo_enabled: boolean
+  today_entry_id: string | null
+}
+
+export interface TelegramLink {
+  code: string
+  expires_at: string
+  command: string
 }

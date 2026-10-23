@@ -43,3 +43,45 @@ services:
         value: Asia/Tashkent
       - key: TELEGRAM_BOT_TOKEN
         sync: false
+
+  # Reminder when a post-operative case has no entry today. 12:00 Asia/Tashkent = 07:00 UTC.
+  - type: cron
+    name: orthoready-postop-reminder
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "0 7 * * *"
+    dockerCommand: python -m app.jobs.postop_reminder
+    envVars:
+      - key: ENV
+        value: production
+      - key: DEMO_MODE
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: orthoready-db
+          property: connectionString
+      - key: TZ_DISPLAY
+        value: Asia/Tashkent
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+
+  # Re-checks post-operative entries against the alert thresholds every 30 minutes.
+  - type: cron
+    name: orthoready-alert-scan
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "*/30 * * * *"
+    dockerCommand: python -m app.jobs.alert_scan
+    envVars:
+      - key: ENV
+        value: production
+      - key: DEMO_MODE
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: orthoready-db
+          property: connectionString
+      - key: TZ_DISPLAY
+        value: Asia/Tashkent
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false

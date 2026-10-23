@@ -1,0 +1,11 @@
+# Antibiotic prophylaxis protocol.
+# TODO(clinical): the department supplies the protocol. Do not fill in drugs or doses here.
+# Intended structure, one entry per drug:
+#   - drug: null
+#     weight_based_dose: null
+#     allergy_alternative: null
+#     timing: null
+# Until then the `antibiotic` checklist item is set manually.
+version: 1
+requires_clinical_validation: true
+drugs: []

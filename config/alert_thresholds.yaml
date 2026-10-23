@@ -1,0 +1,9 @@
+# Post-operative alert thresholds. null disables a rule.
+# TODO(clinical): all values come from the department; none is invented here.
+version: 1
+requires_clinical_validation: true
+thresholds:
+  temperature_max: null        # alert when temperature is above this, °C
+  drain_output_ml_max: null    # alert when drain output is above this, ml
+  pain_vas_max: null           # alert when VAS is above this
+  purulent_discharge: null     # true = alert on purulent wound discharge

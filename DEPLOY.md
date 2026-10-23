@@ -39,3 +39,20 @@ Required by Uzbekistan's personal data law: data stored on servers in Uzbekistan
 6. Back up the database nightly.
 
 The image has no Render-specific code; everything is configured via environment variables.
+
+## C. Telegram, jobs, AI notes and photos
+
+- **Telegram**: create a bot with @BotFather, set `TELEGRAM_BOT_TOKEN`. In production use
+  `TELEGRAM_MODE=webhook` and set `PUBLIC_URL`; the app registers the webhook at start-up and
+  authenticates Telegram with a secret header derived from `SECRET_KEY`. For development leave
+  `TELEGRAM_MODE=polling`. Users link their account from **Профиль** (one-time code → `/start <code>`).
+- **Jobs** (`python -m app.jobs.<name>`): `daily_digest` 18:00, `lab_expiry` daily, `postop_reminder`
+  12:00, `alert_scan` every 30 min. On Render they are in `render-cron.yaml` (UTC schedules); on a
+  hospital server use the host cron. `SCHEDULER_ENABLED=true` runs them in-process for development.
+- **AI notes**: default is the deterministic template generator. To enable the optional LLM:
+  `AI_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, `AI_MODEL`. Only de-identified structured data is
+  sent; any failure falls back to the template text. Every draft stays locked until a doctor
+  presses «Проверено».
+- **Wound photos**: disabled in demo mode. Elsewhere `STORAGE_BACKEND=local` (needs a persistent
+  folder, `STORAGE_DIR`) or `s3` (`pip install -r requirements-s3.txt`, `S3_BUCKET`, optional
+  `S3_ENDPOINT_URL`, `S3_REGION`, and the usual `AWS_*` credentials).

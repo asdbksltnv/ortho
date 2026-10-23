@@ -221,6 +221,15 @@ def update_checklist_item(
             },
         )
 
+    if data.status is ItemStatus.DONE:
+        from app.services.orders import pending_linked_orders
+
+        if pending_linked_orders(session, case.id, key) > 0:
+            raise ApiError(
+                409,
+                "linked_orders_pending",
+                "Есть неподтверждённые назначения по этому пункту: подтвердите результаты",
+            )
     old_status = item.status
     note_changed = (item.note or None) != (data.note or None)
     item.status = data.status.value

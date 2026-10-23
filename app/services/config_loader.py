@@ -9,6 +9,8 @@ from pydantic import BaseModel
 from app.domain.emr import TemplateSpec
 from app.domain.intake import path_exists
 from app.schemas.config import (
+    AlertThresholdsConfig,
+    AntibioticConfig,
     CapriniConfig,
     ChecklistConfig,
     ChecklistItemDefinition,
@@ -19,6 +21,7 @@ from app.schemas.config import (
     EmrTemplateConfig,
     LabsConfig,
     NutritionConfig,
+    OrderSetsConfig,
     ProcedureTemplate,
 )
 from app.settings import get_settings
@@ -43,6 +46,9 @@ class AppConfig:
     nutrition: NutritionConfig
     diets: DietsConfig
     defaults: DefaultsConfig
+    alerts: AlertThresholdsConfig
+    antibiotic: AntibioticConfig
+    order_sets: OrderSetsConfig
     emr_templates: dict[str, TemplateSpec]
     files: list[ConfigFileStatus]
 
@@ -89,7 +95,17 @@ def load_config(config_dir: Path) -> AppConfig:
     nutrition = _read(config_dir / "nutrition.yaml", NutritionConfig)
     diets = _read(config_dir / "diets.yaml", DietsConfig)
     defaults = _read(config_dir / "defaults_ru.yaml", DefaultsConfig)
+    alerts = _read(config_dir / "alert_thresholds.yaml", AlertThresholdsConfig)
+    antibiotic = _read(config_dir / "antibiotic_protocol.yaml", AntibioticConfig)
+    order_sets = _read(config_dir / "order_sets.yaml", OrderSetsConfig)
+    for order_set in order_sets.sets:
+        bad = {o.type for o in order_set.orders} - ORDER_TYPES
+        if bad:
+            raise ValueError(f"order set {order_set.key}: unknown order types {sorted(bad)}")
     for name, meta in (
+        ("alert_thresholds.yaml", alerts),
+        ("antibiotic_protocol.yaml", antibiotic),
+        ("order_sets.yaml", order_sets),
         ("caprini.yaml", caprini),
         ("columbia.yaml", columbia),
         ("nutrition.yaml", nutrition),
@@ -120,12 +136,16 @@ def load_config(config_dir: Path) -> AppConfig:
         nutrition=nutrition,
         diets=diets,
         defaults=defaults,
+        alerts=alerts,
+        antibiotic=antibiotic,
+        order_sets=order_sets,
         emr_templates=emr_templates,
         files=files,
     )
 
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates_ru"
+ORDER_TYPES = {"lab", "imaging", "consult", "other"}
 
 
 def _validate_emr(
@@ -153,6 +173,8 @@ def _validate_emr(
                 and not path_exists(field.path)
             ):
                 raise ValueError(f"{where}: unknown intake path {field.path!r}")
+            if field.source == "note" and field.path not in {"general_condition", "local_status"}:
+                raise ValueError(f"{where}: note fields use path general_condition or local_status")
             if field.source == "staff" and field.staff not in {"treating_doctor", "head", "author"}:
                 raise ValueError(f"{where}: unknown staff role {field.staff!r}")
         unknown = set(spec.gating_items) - checklist_keys

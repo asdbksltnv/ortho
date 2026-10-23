@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { DemoBanner } from '../components/DemoBanner'
+import { NotificationsBell } from '../components/NotificationsBell'
 import { canCreateCase, canReadAudit, isClinical } from '../lib/permissions'
 
 const link = ({ isActive }: { isActive: boolean }) =>
@@ -18,12 +19,27 @@ export function Layout() {
       {user && (
         <header className="bg-teal-900">
           <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2 px-3 py-2">
-            <span className="mr-2 text-lg font-bold text-white">{t('app.name')}</span>
-            <nav className="flex flex-1 gap-1 overflow-x-auto" aria-label="Основная навигация">
+            <span className="mr-auto text-lg font-bold text-white sm:mr-2">{t('app.name')}</span>
+            <nav
+              className="order-last flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto sm:flex-1"
+              aria-label="Основная навигация"
+            >
               {isClinical(user.role) && (
                 <NavLink to="/" end className={link}>
                   {t('nav.board')}
                 </NavLink>
+              )}
+              {isClinical(user.role) && (
+                <>
+                  <NavLink to="/tasks" className={link}>
+                    {t('nav.tasks')}
+                  </NavLink>
+                  {(user.role === 'doctor' || user.role === 'head_of_department') && (
+                    <NavLink to="/round" className={link}>
+                      {t('nav.round')}
+                    </NavLink>
+                  )}
+                </>
               )}
               {canCreateCase(user.role) && (
                 <NavLink to="/case/new" className={link}>
@@ -46,9 +62,13 @@ export function Layout() {
                 </NavLink>
               )}
             </nav>
-            <span className="text-sm text-teal-50">
+            {isClinical(user.role) && <NotificationsBell />}
+            <NavLink
+              to="/profile"
+              className={(s) => `${link(s)} max-w-[9rem] truncate sm:max-w-none`}
+            >
               {user.full_name} · {t(`roles.${user.role}`)}
-            </span>
+            </NavLink>
             <button
               type="button"
               onClick={() => void logout()}

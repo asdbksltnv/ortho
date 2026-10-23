@@ -1,7 +1,18 @@
 import uuid
 from datetime import date, datetime, time
 
-from sqlalchemy import Boolean, Date, ForeignKey, String, Text, Time, UniqueConstraint, Uuid
+from sqlalchemy import (
+    Boolean,
+    Date,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    Time,
+    UniqueConstraint,
+    Uuid,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -38,6 +49,7 @@ class Case(Base, ClinicalMixin):
     is_emergency: Mapped[bool] = mapped_column(Boolean, default=False)
     takes_anticoagulant: Mapped[bool] = mapped_column(Boolean, default=False)
     admitted_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    operated_on: Mapped[date | None] = mapped_column(Date, nullable=True)  # set on entering the OR
     first_ready_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     override_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -121,9 +133,30 @@ class IntakeForm(Base, ClinicalMixin):
 
 class GeneratedDocument(Base, ClinicalMixin):
     __tablename__ = "generated_documents"
-    __table_args__ = (UniqueConstraint("case_id", "template_id", name="uq_document_case_template"),)
+    __table_args__ = (
+        # One document per template per case; one T6 note per post-operative entry.
+        Index(
+            "uq_document_case_template",
+            "case_id",
+            "template_id",
+            unique=True,
+            postgresql_where=text("postop_entry_id IS NULL"),
+            sqlite_where=text("postop_entry_id IS NULL"),
+        ),
+        Index(
+            "uq_document_entry_template",
+            "postop_entry_id",
+            "template_id",
+            unique=True,
+            postgresql_where=text("postop_entry_id IS NOT NULL"),
+            sqlite_where=text("postop_entry_id IS NOT NULL"),
+        ),
+    )
 
     case_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("cases.id"), index=True)
+    postop_entry_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("postop_entries.id"), nullable=True
+    )
     template_id: Mapped[str] = mapped_column(String(64))
     template_version: Mapped[int] = mapped_column(default=1)
     # list of rendered fields in EMR order; each has a "copied" flag
@@ -140,3 +173,62 @@ class IdempotencyKey(Base):
     key: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     case_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("cases.id"), index=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class Order(Base, ClinicalMixin):
+    """An order made at rounds: lab, imaging, consult or other."""
+
+    __tablename__ = "orders"
+
+    case_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("cases.id"), index=True)
+    type: Mapped[str] = mapped_column(String(16))  # lab | imaging | consult | other
+    item: Mapped[str] = mapped_column(String(300))
+    assignee_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id"), index=True)
+    status: Mapped[str] = mapped_column(String(24), default="ordered", index=True)
+    linked_checklist_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at_round: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class PostOpEntry(Base, ClinicalMixin):
+    """One daily post-operative monitoring entry (one per calendar day per case)."""
+
+    __tablename__ = "postop_entries"
+    __table_args__ = (UniqueConstraint("case_id", "entry_date", name="uq_postop_case_day"),)
+
+    case_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("cases.id"), index=True)
+    entered_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    entry_date: Mapped[date] = mapped_column(Date)  # local calendar day
+    post_op_day: Mapped[int] = mapped_column()
+    data: Mapped[dict[str, object]] = mapped_column(JSONType)
+    alerts: Mapped[list[str]] = mapped_column(JSONType, default=list)  # alert codes
+    alerts_notified: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class AiNoteDraft(Base, ClinicalMixin):
+    """Drafted «Общее состояние» / «Локальный статус». Copying is locked until approved."""
+
+    __tablename__ = "ai_note_drafts"
+
+    postop_entry_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("postop_entries.id"), unique=True, index=True
+    )
+    generator: Mapped[str] = mapped_column(String(16))  # template | llm
+    output: Mapped[dict[str, str]] = mapped_column(JSONType)
+    approved_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id"), nullable=True
+    )
+    approved_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class Notification(Base, ClinicalMixin):
+    """Outgoing message. `payload` holds only initials/room/bed and the event: no identifiers."""
+
+    __tablename__ = "notifications"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id"), index=True)
+    channel: Mapped[str] = mapped_column(String(16))  # app | telegram
+    event: Mapped[str] = mapped_column(String(32))
+    payload: Mapped[dict[str, object]] = mapped_column(JSONType)
+    sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    read_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)

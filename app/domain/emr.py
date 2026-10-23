@@ -61,6 +61,7 @@ class TemplateSpec:
     status: str  # ready | awaiting_template
     fields: tuple[FieldSpec, ...]
     gating_items: tuple[str, ...] = ()
+    scope: str = "case"  # case | postop_entry
 
 
 @dataclass
@@ -76,6 +77,7 @@ class RenderedField:
     icd: list[dict[str, str]] | None = None
     hint: str | None = None
     missing: bool = False
+    locked: bool = False  # AI/template draft not yet marked «Проверено»: copying is disabled
 
     def comparable(self) -> tuple[Any, ...]:
         """What the doctor would paste; used to detect that a stored document is outdated."""
@@ -96,6 +98,7 @@ class RenderedField:
             "icd": self.icd,
             "hint": self.hint,
             "missing": self.missing,
+            "locked": self.locked,
         }
 
 
@@ -112,6 +115,8 @@ class RenderInput:
     case_values: dict[str, str | None] = field(default_factory=dict)
     studies: list[str] = field(default_factory=list)
     system_defaults: dict[str, str | None] = field(default_factory=dict)
+    notes: dict[str, str | None] = field(default_factory=dict)  # NoteGenerator output
+    notes_approved: bool = False
     _cache: dict[str, list[RenderedField]] = field(default_factory=dict)
 
 
@@ -238,6 +243,13 @@ def _resolve(spec: FieldSpec, inp: RenderInput) -> RenderedField:
         return _base(spec, display="value", value=format_datetime_ru(inp.schedule) or None)
     if source == "board":
         return _base(spec, display="value", items=list(inp.studies))
+    if source == "note":
+        return _base(
+            spec,
+            display="value",
+            value=_clean(inp.notes.get(spec.path or "")),
+            locked=not inp.notes_approved,
+        )
     if source == "procedure":
         key = (spec.path or "").removeprefix("surgery_texts.")
         return _base(spec, display="value", value=_clean(inp.procedure_texts.get(key)))

@@ -5,3 +5,36 @@ body,
 #root {
   min-height: 100%;
 }
+
+/* Chart palette (validated reference instance: blue is categorical slot 1). */
+.viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #6b6a66;
+  --grid: #e5e4e0;
+  --series-1: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme='light'])) .viz-root {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #a5a49b;
+    --grid: #33322f;
+    --series-1: #3987e5;
+  }
+}
+
+/* Long option labels must never widen the page on a 360 px phone. */
+select,
+input,
+textarea {
+  max-width: 100%;
+}
+main .grid > *,
+main label {
+  min-width: 0;
+}

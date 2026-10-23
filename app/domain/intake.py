@@ -234,7 +234,9 @@ def valid_path_roots() -> set[str]:
     return set(IntakeData.model_fields)
 
 
-VIRTUAL_ROOTS: dict[str, type[BaseModel]] = {"latest_vitals": Vitals}
+from app.domain.postop import PostOpData  # noqa: E402
+
+VIRTUAL_ROOTS: dict[str, type[BaseModel]] = {"latest_vitals": Vitals, "postop": PostOpData}
 
 
 def path_exists(path: str) -> bool:

@@ -1,0 +1,11 @@
+{%- set d = data -%}
+{%- if d.post_op_day == 0 %}День операции.{% else %}{{ d.post_op_day }}-е сутки после операции.{% endif -%}
+{%- if d.complaints %} Жалобы: {{ d.complaints }}{% if d.complaints[-1] not in '.!?' %}.{% endif %}{% endif -%}
+{%- if d.pain_vas is not none %} Боль по ВАШ {{ d.pain_vas }} из 10.{% endif -%}
+{%- if d.consciousness %} Сознание {{ d.consciousness }}.{% endif -%}
+{%- if d.mobilization.level %} Двигательный режим: {{ d.mobilization.level }}.{% endif -%}
+{%- if d.mobilization.weight_bearing %} Нагрузка на конечность: {{ d.mobilization.weight_bearing }}.{% endif -%}
+{%- if d.mobilization.physiotherapy %} Физиотерапия проводится.{% endif -%}
+{%- if d.therapy.antibiotic_day %} Антибиотикотерапия: {{ d.therapy.antibiotic_day }}-е сутки.{% endif -%}
+{%- if d.therapy.vte_prophylaxis %} Профилактика ВТЭ проводится.{% endif -%}
+{%- if d.therapy.analgesia %} Обезболивание: {{ d.therapy.analgesia }}.{% endif -%}

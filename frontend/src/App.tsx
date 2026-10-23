@@ -11,6 +11,10 @@ import { DocumentPage } from './pages/DocumentPage'
 import { DocumentsPage } from './pages/DocumentsPage'
 import { IntakePage } from './pages/IntakePage'
 import { LoginPage } from './pages/LoginPage'
+import { PostOpPage } from './pages/PostOpPage'
+import { ProfilePage } from './pages/ProfilePage'
+import { RoundPage } from './pages/RoundPage'
+import { TasksPage } from './pages/TasksPage'
 import { NewCasePage } from './pages/NewCasePage'
 import { UsersPage } from './pages/admin/UsersPage'
 import { WardsPage } from './pages/admin/WardsPage'
@@ -79,6 +83,46 @@ export function App() {
           element={
             <Guard allow={isClinical}>
               <DocumentPage />
+            </Guard>
+          }
+        />
+        <Route
+          path="/case/:id/postop"
+          element={
+            <Guard allow={isClinical}>
+              <PostOpPage />
+            </Guard>
+          }
+        />
+        <Route
+          path="/case/:id/postop/:entryId/document"
+          element={
+            <Guard allow={isClinical}>
+              <DocumentPage />
+            </Guard>
+          }
+        />
+        <Route
+          path="/tasks"
+          element={
+            <Guard allow={isClinical}>
+              <TasksPage />
+            </Guard>
+          }
+        />
+        <Route
+          path="/round"
+          element={
+            <Guard allow={(r) => r === 'doctor' || r === 'head_of_department'}>
+              <RoundPage />
+            </Guard>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <Guard allow={() => true}>
+              <ProfilePage />
             </Guard>
           }
         />

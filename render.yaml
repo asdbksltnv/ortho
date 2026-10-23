@@ -33,6 +33,8 @@ services:
         sync: false
       - key: TELEGRAM_MODE
         value: webhook
+      - key: PUBLIC_URL
+        sync: false # https://<your-service>.onrender.com, used to register the Telegram webhook
       - key: AI_PROVIDER
         value: template
       - key: ANTHROPIC_API_KEY

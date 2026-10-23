@@ -1,0 +1,16 @@
+{%- set d = data -%}
+{%- if d.wound.dressing %}Повязка {{ d.wound.dressing }}. {% endif -%}
+{%- if d.wound.dressing_changed %}Перевязка выполнена. {% endif -%}
+{%- if d.wound.discharge %}Отделяемое из раны: {{ d.wound.discharge }}. {% endif -%}
+Гиперемия: {{ 'есть' if d.wound.redness else 'нет' }}. Отёк: {{ 'есть' if d.wound.swelling else 'нет' }}.
+{%- if d.wound.sutures %} Швы: {{ d.wound.sutures }}.{% endif -%}
+{%- if not d.drain.present %} Дренаж отсутствует.
+{%- elif d.drain.removed %} Дренаж удалён.
+{%- elif d.drain.output_ml is not none %} Дренаж: отделяемое {{ d.drain.output_ml }} мл.
+{%- else %} Дренаж установлен.{% endif -%}
+{%- set nv = [] -%}
+{%- if d.neurovascular.pulsation %}{% set _ = nv.append('пульсация ' ~ d.neurovascular.pulsation) %}{% endif -%}
+{%- if d.neurovascular.sensation %}{% set _ = nv.append('чувствительность ' ~ d.neurovascular.sensation) %}{% endif -%}
+{%- if d.neurovascular.motor %}{% set _ = nv.append('движения ' ~ d.neurovascular.motor) %}{% endif -%}
+{%- if nv %} Дистальный нейроваскулярный статус: {{ nv | join(', ') }}.{% endif %}
+ Болезненность в икроножных мышцах: {{ 'есть' if d.calf_tenderness else 'нет' }}.

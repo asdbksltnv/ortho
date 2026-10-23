@@ -6,6 +6,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from app.domain.enums import CaseStatus, ConsentType, ItemStatus, Role
 from app.domain.intake import IntakeData
+from app.domain.postop import PostOpData
 from app.schemas.config import (
     CapriniConfig,
     ColumbiaConfig,
@@ -37,6 +38,7 @@ class UserOut(ORMModel):
     full_name: str
     role: Role
     is_active: bool
+    telegram_linked: bool = False
 
 
 class StaffOut(ORMModel):
@@ -195,6 +197,7 @@ class CaseOut(BaseModel):
     items: list[ItemOut]
     readiness: ReadinessOut
     can_edit: bool
+    available_transitions: list[CaseStatus] = Field(default_factory=list)
 
 
 class LabResultCreate(BaseModel):
@@ -360,6 +363,7 @@ class DocumentField(BaseModel):
     hint: str | None
     missing: bool
     copied: bool = False
+    locked: bool = False
 
 
 class DocumentOut(DocumentSummary):
@@ -370,3 +374,116 @@ class DocumentOut(DocumentSummary):
 
 class CopiedIn(BaseModel):
     copied: bool
+
+
+# ---- status flow ----
+class TransitionIn(BaseModel):
+    to: CaseStatus
+    reason: str | None = Field(default=None, max_length=1000)
+    planned_surgery_date: date | None = None
+    planned_surgery_time: time | None = None
+
+
+class StatusEventOut(BaseModel):
+    from_status: CaseStatus | None
+    to_status: CaseStatus
+    user_name: str | None
+    reason: str | None
+    is_override: bool
+    created_at: datetime
+
+
+# ---- orders ----
+class OrderIn(BaseModel):
+    type: Literal["lab", "imaging", "consult", "other"]
+    item: str = Field(min_length=1, max_length=300)
+    assignee_id: uuid.UUID
+    linked_checklist_key: str | None = None
+    created_at_round: bool = False
+
+
+class OrderFromSetIn(BaseModel):
+    set_key: str
+    assignee_id: uuid.UUID
+    created_at_round: bool = False
+
+
+class OrderStatusIn(BaseModel):
+    status: Literal["in_progress", "result_available", "reviewed", "cancelled"]
+
+
+class OrderOut(BaseModel):
+    id: uuid.UUID
+    case_id: uuid.UUID
+    type: str
+    item: str
+    assignee_id: uuid.UUID
+    assignee_name: str
+    status: str
+    linked_checklist_key: str | None
+    created_at_round: bool
+    created_at: datetime
+    case_label: str  # "Пал. 3, к. 2 (А. Д.)": initials and bed only
+    next_statuses: list[str] = Field(default_factory=list)
+
+
+class OrderSetOut(BaseModel):
+    key: str
+    name_ru: str
+    orders: list[dict[str, str]]
+
+
+# ---- post-operative ----
+class NoteOut(BaseModel):
+    generator: str
+    general_condition: str
+    local_status: str
+    approved: bool
+    approved_at: datetime | None
+    approved_by_name: str | None
+
+
+class PostOpIn(BaseModel):
+    data: PostOpData
+
+
+class PostOpEntryOut(BaseModel):
+    id: uuid.UUID
+    case_id: uuid.UUID
+    entered_at: datetime
+    entry_date: date
+    post_op_day: int
+    data: PostOpData
+    alerts: list[str]
+    note: NoteOut | None
+    has_photo: bool
+
+
+class PostOpListOut(BaseModel):
+    entries: list[PostOpEntryOut]
+    trends: list[dict[str, object]]
+    can_record: bool
+    can_edit: bool
+    photo_enabled: bool
+    today_entry_id: uuid.UUID | None
+
+
+class NoteApproveIn(BaseModel):
+    general_condition: str = Field(min_length=1, max_length=1500)
+    local_status: str = Field(min_length=1, max_length=1500)
+
+
+# ---- notifications / telegram ----
+class NotificationOut(BaseModel):
+    id: uuid.UUID
+    event: str
+    text: str
+    case_id: uuid.UUID | None
+    created_at: datetime
+    read: bool
+
+
+class TelegramLinkOut(BaseModel):
+    code: str
+    expires_at: datetime
+    command: str

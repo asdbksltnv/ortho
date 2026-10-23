@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.auth import hash_password
 from app.db import get_session_factory
 from app.domain.enums import CaseStatus, ItemStatus, Role
-from app.models.case import Case, CaseStatusEvent, ChecklistItem, Patient
+from app.models.case import Case, CaseStatusEvent, ChecklistItem, Order, Patient
 from app.models.user import User
 from app.models.ward import Bed, Room, Ward
 from app.services.cases import refresh_first_ready
@@ -126,6 +126,10 @@ def seed_cases(session: Session, beds: list[Bed], config: AppConfig) -> None:
             status=status.value,
             takes_anticoagulant=(i == 5),
         )
+        if status in (CaseStatus.IN_OR, CaseStatus.POST_OP):
+            case.operated_on = today - timedelta(
+                days=0 if status is CaseStatus.IN_OR else 1 + i % 2
+            )
         session.add(case)
         session.flush()
         statuses = _statuses_for(plan, keys, rng)
@@ -149,6 +153,16 @@ def seed_cases(session: Session, beds: list[Bed], config: AppConfig) -> None:
         session.flush()
         session.refresh(case)
         refresh_first_ready(case, config)
+        if nurse and status is CaseStatus.IN_PREPARATION and i % 2 == 0:
+            session.add(
+                Order(
+                    case_id=case.id,
+                    type="lab",
+                    item="ОАК",
+                    assignee_id=nurse.id,
+                    created_at_round=True,
+                )
+            )
 
 
 def seed_if_empty() -> dict[str, str] | None:

@@ -127,3 +127,53 @@
   limits, not clinical thresholds.
 - **Found by browser tests**: the board sorted bed-less cases first (`"~"` sorts before Cyrillic);
   fixed and covered by a unit test.
+
+## Phase 3 (workflow)
+- **Status flow** (`app/domain/status_flow.py`, pure): forward steps only, plus two reversals
+  (cancel a call, revoke an approval) that are head-only and need a reason. Approval is head-only and
+  needs a planned date; the call to the OR needs Ready, otherwise the head may override with a
+  written reason (shown on the board and case page, stored on the status event for the Phase 4
+  KPIs). Emergency cases are not blocked by the checklist. A doctor cannot override, even with a
+  reason. Anaesthesiologists and admins never move cases; doctors move only their own patients.
+  `in_or` records `operated_on`, which drives the post-op day.
+- **Notifications**: every message is built by `case_label()` as «Пал. 3, к. 2 (А. Д.): событие».
+  Events: call to OR (treating doctor, all active nurses/head nurses and anaesthesiologists),
+  approval, order assigned, result ready, post-op alert, lab expiring before surgery, daily digest
+  (each doctor for their cases; head nurse for all), post-op reminder. Each recipient gets an
+  in-app row (bell) and, when linked, a Telegram message. Failures are stored in
+  `Notification.error` (HTTP status or exception class only; the bot token never appears) and never
+  block the action. Order item text is deliberately left out of messages.
+- **Telegram**: linking by one-time 8-character code (15 minutes). Webhook requests are authenticated
+  by a header secret derived from `SECRET_KEY`; polling runs in a daemon thread for development.
+  httpx request logging is set to WARNING because the Bot API URL contains the token.
+- **Orders**: only doctors (own patients) and the head create them; nurses and assignees move them
+  forward; only a doctor reviews or cancels. A linked order sets the checklist item to `pending`
+  and **blocks marking that item done** until every linked order is reviewed or cancelled; it does
+  not mark the item done by itself (one reviewed order is not proof the whole item is complete).
+  «Мои задачи» = open orders assigned to me, plus results waiting for review on my patients.
+  Round mode creates orders with `created_at_round`; its summary lists what the doctor ordered since
+  the round started, grouped by patient and by assignee (initials and bed only).
+- **Post-op**: entries need the case in returned_to_ward / transferred_icu / post_op and a recorded
+  operation date; one entry per calendar day (a second attempt returns the existing id). Only the
+  treating doctor or the head records. Day 0 reads «День операции.», later days «N-е сутки после
+  операции.». Editing an entry redrafts the note and drops the earlier approval.
+- **Notes**: `NoteGenerator` interface with a deterministic template generator (default) and an
+  optional LLM generator. The LLM receives only structured values (`llm_safe`: no free text, name,
+  birth date or record number; analgesia is reduced to a yes/no); its output must be JSON with
+  exactly `general_condition` and `local_status`, within length limits, and the day phrase is
+  enforced; anything else falls back to the template text. T6 note fields stay locked (no copy
+  button, no clipboard text, server refuses the tick with 409) until the doctor presses
+  «Проверено»; approving refreshes an existing T6 document.
+- **Alerts**: thresholds in `config/alert_thresholds.yaml` are all null, so nothing alerts until the
+  department sets values. An alert notifies the treating doctor once per new alert code per entry.
+- **Photos**: raw-body upload (no multipart dependency) validated by size and magic bytes, stored
+  through the storage interface (local / S3 / disabled; disabled when `DEMO_MODE=true`). The client
+  can never set the photo key. S3 needs the optional `requirements-s3.txt`.
+- **Charts** follow the dataviz guidance: one series per chart (title names it, no legend box),
+  2 px line, 8 px markers with a surface ring, recessive grid, hover/focus tooltip, table view, and
+  the palette's blue (categorical slot 1) with a dark-mode variant. The wound-status series is a
+  table because it is categorical per day.
+- **Cron limit**: `render-cron.yaml` now has four jobs; deploy it as a second Blueprint when the
+  workspace has room (see the earlier note about Render's resource limit).
+- **Browser tests** found a header overflow at 360 px and a long-label overflow in the orders panel;
+  both fixed and the 360 px check now covers the case page.

@@ -6,6 +6,8 @@ import { api } from '../api/client'
 import type { CaseDetail, Definitions, LabResult } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
 import { ChecklistEditor } from '../components/ChecklistEditor'
+import { OrdersPanel } from '../components/OrdersPanel'
+import { StatusPanel } from '../components/StatusPanel'
 import { StatusIcon } from '../components/StatusIcon'
 import { formatDate, formatDateTime } from '../lib/format'
 import { canEditItem, canWriteRecords } from '../lib/permissions'
@@ -124,7 +126,20 @@ export function CasePage() {
         >
           {t('case.documents')}
         </Link>
+        <Link
+          to={`/case/${c.id}/postop`}
+          className="inline-flex min-h-11 items-center rounded border border-teal-800 px-4 text-sm font-medium text-teal-900"
+        >
+          {t('case.postop')}
+        </Link>
       </nav>
+
+      <StatusPanel detail={c} />
+
+      <OrdersPanel
+        caseId={c.id}
+        canCreate={user.role === 'doctor' || user.role === 'head_of_department'}
+      />
 
       <section className="mt-4 rounded border border-slate-300 bg-white p-4" aria-labelledby="chk">
         <h2 id="chk" className="text-lg font-semibold">

@@ -100,6 +100,12 @@ class Api:
     def patch(self, path: str, **kw: Any) -> Any:
         return self.request("PATCH", path, **kw)
 
+    def put(self, path: str, **kw: Any) -> Any:
+        return self.request("PUT", path, **kw)
+
+    def delete(self, path: str, **kw: Any) -> Any:
+        return self.request("DELETE", path, **kw)
+
 
 @pytest.fixture
 def world(db: sessionmaker[Session]) -> dict[str, Any]:
@@ -171,3 +177,37 @@ def case_id(api: Api, world: dict[str, Any]) -> uuid.UUID:
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(app)
+
+
+class FakeTelegram:
+    """Records outgoing messages instead of calling the Bot API."""
+
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, str]] = []
+        self.fail = False
+
+    def send_message(self, chat_id: str, text: str) -> None:
+        from app.services.telegram import TelegramError
+
+        if self.fail:
+            raise TelegramError("HTTP 500")
+        self.sent.append((chat_id, text))
+
+
+@pytest.fixture
+def telegram_fake() -> Iterator[FakeTelegram]:
+    from app.services import telegram
+
+    fake = FakeTelegram()
+    telegram.set_client_for_tests(fake)  # type: ignore[arg-type]
+    yield fake
+    telegram.set_client_for_tests(None)
+
+
+def link_telegram(db: sessionmaker[Session], login: str, chat_id: str) -> None:
+    from sqlalchemy import select
+
+    with db() as s:
+        user = s.scalars(select(User).where(User.login == login)).one()
+        user.telegram_chat_id = chat_id
+        s.commit()

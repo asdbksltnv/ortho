@@ -16,8 +16,9 @@ from app.api.deps import (
 )
 from app.api.errors import ApiError, forbidden, not_found
 from app.auth import CurrentUser
-from app.domain.enums import AuditAction, ItemStatus
+from app.domain.enums import AuditAction, CaseStatus, ItemStatus
 from app.domain.permissions import can_edit_case, can_write_clinical_records
+from app.domain.status_flow import available_targets
 from app.models.case import Case, Consent, LabResult
 from app.models.user import User
 from app.schemas.api import (
@@ -79,6 +80,11 @@ def _case_out(session: Session, case: Case, user: CurrentUser, config: AppConfig
         ],
         readiness=ReadinessOut(ready=readiness.ready, blocking=list(readiness.blocking)),
         can_edit=can_edit_case(user.role, is_treating_doctor=case.treating_doctor_id == user.id),
+        available_transitions=available_targets(
+            CaseStatus(case.status),
+            role=user.role,
+            is_treating_doctor=case.treating_doctor_id == user.id,
+        ),
     )
 
 

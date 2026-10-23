@@ -1,0 +1,41 @@
+# T6 Дневниковая запись / progress note (25 fields, 6 critical). One per post-operative day.
+# No heart-rate field and no dedicated wound or drain fields: those findings go into the two
+# note fields, which come from the NoteGenerator and stay locked until the doctor presses «Проверено».
+# Field order mirrors the AccuracyMed screen exactly. Header fields (patient, doctor, date,
+# document number) are filled by AccuracyMed and are not part of this file.
+# source: form | generated | copy:<template>.<key> | board | schedule | staff | skip
+#         plus case / procedure (values from the case or the procedure template).
+# required: true = the app (not the EMR) needs the value before generation.
+
+id: "t6_progress_note"
+title_ru: "Дневниковая запись"
+version: 1
+status: "ready"
+scope: "postop_entry"
+requires_clinical_validation: true
+fields:
+  - {"key": "exam_time", "section": "Осмотр", "label": "Время осмотра пациента", "emr_type": "datetime", "critical": true, "source": "schedule"}
+  - {"key": "bp", "section": "Физикальные показатели", "label": "Артериальное давление", "emr_type": "text", "critical": true, "path": "postop.vitals.bp"}
+  - {"key": "pulse", "section": "Физикальные показатели", "label": "Пульс", "emr_type": "number", "critical": true, "path": "postop.vitals.pulse", "hint": "В EMR единица «Hz»; вводите уд/мин"}
+  - {"key": "rr", "section": "Физикальные показатели", "label": "Частота дыхания", "emr_type": "number", "critical": true, "path": "postop.vitals.rr"}
+  - {"key": "spo2", "section": "Физикальные показатели", "label": "Сатурация, SpO2", "emr_type": "number", "critical": true, "path": "postop.vitals.spo2"}
+  - {"key": "cvp", "section": "Физикальные показатели", "label": "Центральное венозное давление", "emr_type": "number", "path": "postop.vitals.cvp", "hint": "Пусто, если не измерялось"}
+  - {"key": "temp", "section": "Физикальные показатели", "label": "Температура тела", "emr_type": "number", "critical": true, "path": "postop.vitals.temp"}
+  - {"key": "weight", "section": "Физикальные показатели", "label": "Вес", "emr_type": "number", "source": "copy:t1_primary_exam.weight"}
+  - {"key": "height", "section": "Физикальные показатели", "label": "Рост", "emr_type": "number", "source": "copy:t1_primary_exam.height"}
+  - {"key": "bmi", "section": "Физикальные показатели", "label": "ИМТ", "emr_type": "calculate", "source": "skip"}
+  - {"key": "allergy_has", "section": "Аллергия", "label": "Есть аллергия?", "emr_type": "line", "source": "copy:t1_primary_exam.allergy_has"}
+  - {"key": "allergy_description", "section": "Аллергия", "label": "Описание аллергии", "emr_type": "text", "source": "copy:t1_primary_exam.allergy_description"}
+  - {"key": "general_condition", "section": "Общее состояние", "label": "Описание", "emr_type": "text", "source": "note", "path": "general_condition", "hint": "Проверьте текст и нажмите «Проверено»"}
+  - {"key": "local_status", "section": "Локальный статус", "label": "Описание органа или системы", "emr_type": "text", "source": "note", "path": "local_status", "hint": "Проверьте текст и нажмите «Проверено»"}
+  - {"key": "dx_main", "section": "Диагноз", "label": "Диагноз (полная формулировка)", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_main"}
+  - {"key": "dx_complication", "section": "Диагноз", "label": "Осложнение основного", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_complication"}
+  - {"key": "dx_competing", "section": "Диагноз", "label": "Конкурирующий", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_competing"}
+  - {"key": "dx_comorbid", "section": "Диагноз", "label": "Сопутствующий", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_comorbid"}
+  - {"key": "dx_background", "section": "Диагноз", "label": "Фоновый", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_background"}
+  - {"key": "diet", "section": "Диета", "label": "Диета", "emr_type": "line", "source": "copy:t1_primary_exam.diet"}
+  - {"key": "special_diet", "section": "Диета", "label": "Специальная диета", "emr_type": "text", "source": "copy:t1_primary_exam.special_diet"}
+  - {"key": "recommendations", "section": "Рекомендации", "label": "Рекомендации", "emr_type": "text", "path": "postop.recommendations"}
+  - {"key": "receiving_doctor", "section": "Передача дежурства", "label": "Принимающий врач", "emr_type": "staff", "source": "skip", "hint": "Только для записей при передаче дежурства"}
+  - {"key": "handing_doctor", "section": "Передача дежурства", "label": "Сдавший врач", "emr_type": "staff", "source": "skip", "hint": "Только для записей при передаче дежурства"}
+  - {"key": "resident", "section": "Подпись", "label": "Врач-резидент", "emr_type": "staff", "source": "staff", "staff": "author"}

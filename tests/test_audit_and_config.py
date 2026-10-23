@@ -82,6 +82,42 @@ def test_definitions_expose_labels_and_procedures(api: Api) -> None:
     }
 
 
+def test_phase3_config_is_empty_where_the_department_has_not_decided() -> None:
+    config = load_config(CONFIG_DIR)
+    t = config.alerts.thresholds
+    assert (t.temperature_max, t.drain_output_ml_max, t.pain_vas_max, t.purulent_discharge) == (
+        None,
+        None,
+        None,
+        None,
+    )
+    assert config.antibiotic.drugs == []  # never filled in here
+    assert {s.name_ru for s in config.order_sets.sets} == {
+        "Контрольная рентгенография",
+        "Повторный ОАК",
+    }
+    t6 = config.emr_templates["t6_progress_note"]
+    assert (
+        t6.scope == "postop_entry"
+        and len(t6.fields) == 25
+        and sum(f.critical for f in t6.fields) == 6
+    )
+    assert {f.key for f in t6.fields if f.source == "note"} == {"general_condition", "local_status"}
+
+
+def test_bad_note_path_and_order_type_fail_startup(config_copy: Path) -> None:
+    path = config_copy / "emr_templates" / "t6_progress_note.yaml"
+    text = path.read_text().replace('"path": "general_condition"', '"path": "nonsense"')
+    path.write_text(text)
+    with pytest.raises(ValueError, match="note fields"):
+        load_config(config_copy)
+    path.write_text(text.replace('"path": "nonsense"', '"path": "general_condition"'))
+    sets = config_copy / "order_sets.yaml"
+    sets.write_text(sets.read_text().replace("type: imaging", "type: surgery"))
+    with pytest.raises(ValueError, match="unknown order types"):
+        load_config(config_copy)
+
+
 def test_real_config_loads_and_all_flags_are_unvalidated() -> None:
     config = load_config(CONFIG_DIR)
     assert len(config.checklist.items) == 11
