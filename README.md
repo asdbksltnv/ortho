@@ -6,7 +6,7 @@ Traumatology, Akfa Medline University Hospital, Tashkent. UI in Russian (i18n re
 One deployable: FastAPI serves the built React app at `/` and the API at `/api/v1`.
 Health check: `/api/health`.
 
-**Status: Phase 1 done (auth, roles, readiness board).** Phases 2-4 follow BUILD_PROMPT.md.
+**Status: Phase 2 done (intake form, offline drafts, EMR documents T1-T3).** Phases 3-4 follow BUILD_PROMPT.md.
 See DECISIONS.md for assumptions and open items.
 
 ## Run with Docker
@@ -31,6 +31,13 @@ cd frontend && npm ci && npm run dev    # http://localhost:5173, proxies /api to
 ```bash
 .venv/bin/ruff check . && .venv/bin/ruff format --check . && .venv/bin/mypy app && .venv/bin/pytest
 cd frontend && npm run lint && npm run format:check && npm run typecheck && npm test && npm run build
+```
+
+## Browser tests
+
+```bash
+cd frontend && npm ci && npm run build          # the tests serve the built app
+cd ../e2e && npm ci && npx playwright install chromium && npx playwright test
 ```
 
 ## Data protection

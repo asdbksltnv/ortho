@@ -1,0 +1,6 @@
+{%- if facts.age is not none %}Возраст: {{ facts.age }}. {% endif -%}
+{%- if facts.bmi_text %}ИМТ: {{ facts.bmi_text }}. {% endif -%}
+{%- if facts.comorbid %}Сопутствующие заболевания: {{ facts.comorbid | join(', ') }}. {% endif -%}
+{%- if data.social.tobacco %}Курение: {{ data.social.tobacco }}. {% endif -%}
+{%- if facts.caprini.total is not none %}Риск ВТЭ по шкале Caprini: {{ facts.caprini.total }} ({{ facts.caprini.category }}). {% endif -%}
+{%- if facts.anticoagulants %}Принимает антикоагулянты: {{ facts.anticoagulants | join(', ') }}.{% endif -%}

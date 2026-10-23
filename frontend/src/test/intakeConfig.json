@@ -1,0 +1,505 @@
+{
+  "picklists": {
+    "course": ["острое", "прогрессирующее", "стабильное", "рецидивирующее"],
+    "weight_bearing": ["полная", "с дополнительной опорой", "невозможна"],
+    "alcohol": ["не употребляет", "эпизодически", "регулярно"],
+    "tobacco": ["не курит", "курит", "бросил(а)"],
+    "drugs": ["Отрицает", "Да"],
+    "economic": ["благополучная", "удовлетворительная", "неблагополучная"],
+    "economic_ability": ["достаточная", "ограниченная"],
+    "physical_activity": ["самостоятельно", "с опорой", "ограничена", "постельный режим"],
+    "severity": ["удовлетворительное", "средней тяжести", "тяжёлое"],
+    "consciousness": ["ясное", "нарушенное"],
+    "position": ["активное", "пассивное", "вынужденное"],
+    "epidemiological": [
+      "гемотрансфузии",
+      "гепатит",
+      "туберкулёз",
+      "ВИЧ / ИППП",
+      "контакт с инфекционными больными"
+    ],
+    "inspection": ["деформация", "отёк", "гиперемия", "ссадины / раны", "послеоперационные рубцы"],
+    "movements": [
+      "сгибание",
+      "разгибание",
+      "отведение",
+      "приведение",
+      "наружная ротация",
+      "внутренняя ротация"
+    ],
+    "stability_result": ["отрицательный", "положительный"],
+    "pulsation": ["сохранена", "ослаблена", "отсутствует"],
+    "sensation": ["сохранена", "снижена", "отсутствует"],
+    "motor": ["сохранены", "ограничены", "отсутствуют"],
+    "social_needs": ["уход дома", "транспорт", "нет"],
+    "psychological_needs": ["нет", "тревога перед операцией", "нужны разъяснения"],
+    "discharge_needs": ["ходунки", "костыли", "реабилитация", "перевязки", "контрольный осмотр"],
+    "consults": ["Анестезиолог", "Терапевт"]
+  },
+  "segments": [
+    {
+      "key": "knee",
+      "name_ru": "коленный сустав",
+      "gen_ru": "коленного сустава"
+    },
+    {
+      "key": "hip",
+      "name_ru": "тазобедренный сустав",
+      "gen_ru": "тазобедренного сустава"
+    },
+    {
+      "key": "ankle",
+      "name_ru": "голеностопный сустав",
+      "gen_ru": "голеностопного сустава"
+    },
+    {
+      "key": "shoulder",
+      "name_ru": "плечевой сустав",
+      "gen_ru": "плечевого сустава"
+    },
+    {
+      "key": "elbow",
+      "name_ru": "локтевой сустав",
+      "gen_ru": "локтевого сустава"
+    },
+    {
+      "key": "wrist",
+      "name_ru": "лучезапястный сустав",
+      "gen_ru": "лучезапястного сустава"
+    },
+    {
+      "key": "thigh",
+      "name_ru": "бедро",
+      "gen_ru": "бедра"
+    },
+    {
+      "key": "shin",
+      "name_ru": "голень",
+      "gen_ru": "голени"
+    },
+    {
+      "key": "arm",
+      "name_ru": "плечо",
+      "gen_ru": "плеча"
+    },
+    {
+      "key": "forearm",
+      "name_ru": "предплечье",
+      "gen_ru": "предплечья"
+    },
+    {
+      "key": "foot",
+      "name_ru": "стопа",
+      "gen_ru": "стопы"
+    },
+    {
+      "key": "hand",
+      "name_ru": "кисть",
+      "gen_ru": "кисти"
+    }
+  ],
+  "systems": {
+    "skin": {
+      "label_ru": "Кожа",
+      "normal_ru": null
+    },
+    "cvs": {
+      "label_ru": "ССС",
+      "normal_ru": null
+    },
+    "resp": {
+      "label_ru": "ДС",
+      "normal_ru": null
+    },
+    "msk": {
+      "label_ru": "ОДС",
+      "normal_ru": null
+    },
+    "gu": {
+      "label_ru": "МПС",
+      "normal_ru": null
+    },
+    "gi": {
+      "label_ru": "ЖКТ",
+      "normal_ru": null
+    },
+    "neuro": {
+      "label_ru": "Неврологическая система",
+      "normal_ru": "Без очаговой неврологической симптоматики"
+    }
+  },
+  "psycho": {
+    "behavior": {
+      "label_ru": "Поведение",
+      "default_ru": "Адекватное"
+    },
+    "appearance": {
+      "label_ru": "Внешний вид",
+      "default_ru": "Опрятный"
+    },
+    "mood": {
+      "label_ru": "Настроение",
+      "default_ru": "Ровное"
+    },
+    "emotions": {
+      "label_ru": "Эмоциональные реакции",
+      "default_ru": "Адекватные"
+    },
+    "understanding": {
+      "label_ru": "Понимание информации",
+      "default_ru": "Понимает в полном объёме"
+    },
+    "criticism": {
+      "label_ru": "Критика к своему заболеванию",
+      "default_ru": "Сохранена"
+    }
+  },
+  "caprini": {
+    "version": 1,
+    "requires_clinical_validation": true,
+    "model": "Caprini 2005",
+    "factors": [
+      {
+        "key": "age_41_60",
+        "points": 1,
+        "label_ru": "Возраст 41–60 лет",
+        "auto": {
+          "type": "age",
+          "min": 41,
+          "max": 60,
+          "value": null
+        }
+      },
+      {
+        "key": "minor_surgery",
+        "points": 1,
+        "label_ru": "Малая операция",
+        "auto": null
+      },
+      {
+        "key": "bmi_over_25",
+        "points": 1,
+        "label_ru": "ИМТ более 25 кг/м²",
+        "auto": {
+          "type": "bmi_over",
+          "min": null,
+          "max": null,
+          "value": 25.0
+        }
+      },
+      {
+        "key": "swollen_legs",
+        "points": 1,
+        "label_ru": "Отёки нижних конечностей",
+        "auto": null
+      },
+      {
+        "key": "varicose_veins",
+        "points": 1,
+        "label_ru": "Варикозное расширение вен",
+        "auto": null
+      },
+      {
+        "key": "pregnancy_postpartum",
+        "points": 1,
+        "label_ru": "Беременность или послеродовой период",
+        "auto": null
+      },
+      {
+        "key": "recurrent_abortion",
+        "points": 1,
+        "label_ru": "Необъяснимые или повторные самопроизвольные аборты в анамнезе",
+        "auto": null
+      },
+      {
+        "key": "hormones",
+        "points": 1,
+        "label_ru": "Оральные контрацептивы или гормональная заместительная терапия",
+        "auto": null
+      },
+      {
+        "key": "sepsis_1m",
+        "points": 1,
+        "label_ru": "Сепсис (менее 1 месяца)",
+        "auto": null
+      },
+      {
+        "key": "lung_disease_1m",
+        "points": 1,
+        "label_ru": "Серьёзное заболевание лёгких, включая пневмонию (менее 1 месяца)",
+        "auto": null
+      },
+      {
+        "key": "abnormal_pulmonary_function",
+        "points": 1,
+        "label_ru": "Нарушение функции лёгких",
+        "auto": null
+      },
+      {
+        "key": "acute_mi",
+        "points": 1,
+        "label_ru": "Острый инфаркт миокарда",
+        "auto": null
+      },
+      {
+        "key": "chf_1m",
+        "points": 1,
+        "label_ru": "Застойная сердечная недостаточность (менее 1 месяца)",
+        "auto": null
+      },
+      {
+        "key": "ibd_history",
+        "points": 1,
+        "label_ru": "Воспалительное заболевание кишечника в анамнезе",
+        "auto": null
+      },
+      {
+        "key": "medical_bed_rest",
+        "points": 1,
+        "label_ru": "Терапевтический пациент, постельный режим",
+        "auto": null
+      },
+      {
+        "key": "age_61_74",
+        "points": 2,
+        "label_ru": "Возраст 61–74 года",
+        "auto": {
+          "type": "age",
+          "min": 61,
+          "max": 74,
+          "value": null
+        }
+      },
+      {
+        "key": "arthroscopic_surgery",
+        "points": 2,
+        "label_ru": "Артроскопическая операция",
+        "auto": null
+      },
+      {
+        "key": "major_open_surgery",
+        "points": 2,
+        "label_ru": "Большая открытая операция (более 45 минут)",
+        "auto": null
+      },
+      {
+        "key": "laparoscopic_surgery",
+        "points": 2,
+        "label_ru": "Лапароскопическая операция (более 45 минут)",
+        "auto": null
+      },
+      {
+        "key": "malignancy",
+        "points": 2,
+        "label_ru": "Злокачественное новообразование",
+        "auto": null
+      },
+      {
+        "key": "bed_over_72h",
+        "points": 2,
+        "label_ru": "Постельный режим более 72 часов",
+        "auto": null
+      },
+      {
+        "key": "plaster_cast",
+        "points": 2,
+        "label_ru": "Иммобилизирующая гипсовая повязка",
+        "auto": null
+      },
+      {
+        "key": "central_venous_access",
+        "points": 2,
+        "label_ru": "Центральный венозный доступ",
+        "auto": null
+      },
+      {
+        "key": "age_75_plus",
+        "points": 3,
+        "label_ru": "Возраст 75 лет и старше",
+        "auto": {
+          "type": "age",
+          "min": 75,
+          "max": null,
+          "value": null
+        }
+      },
+      {
+        "key": "vte_history",
+        "points": 3,
+        "label_ru": "Венозная тромбоэмболия в анамнезе",
+        "auto": null
+      },
+      {
+        "key": "vte_family_history",
+        "points": 3,
+        "label_ru": "Венозная тромбоэмболия в семейном анамнезе",
+        "auto": null
+      },
+      {
+        "key": "factor_v_leiden",
+        "points": 3,
+        "label_ru": "Фактор V Лейден",
+        "auto": null
+      },
+      {
+        "key": "prothrombin_20210a",
+        "points": 3,
+        "label_ru": "Мутация протромбина 20210A",
+        "auto": null
+      },
+      {
+        "key": "lupus_anticoagulant",
+        "points": 3,
+        "label_ru": "Волчаночный антикоагулянт",
+        "auto": null
+      },
+      {
+        "key": "anticardiolipin_antibodies",
+        "points": 3,
+        "label_ru": "Антикардиолипиновые антитела",
+        "auto": null
+      },
+      {
+        "key": "homocysteine_elevated",
+        "points": 3,
+        "label_ru": "Повышенный уровень гомоцистеина в сыворотке",
+        "auto": null
+      },
+      {
+        "key": "hit",
+        "points": 3,
+        "label_ru": "Гепарин-индуцированная тромбоцитопения",
+        "auto": null
+      },
+      {
+        "key": "other_thrombophilia",
+        "points": 3,
+        "label_ru": "Другая врождённая или приобретённая тромбофилия",
+        "auto": null
+      },
+      {
+        "key": "stroke_1m",
+        "points": 5,
+        "label_ru": "Инсульт (менее 1 месяца)",
+        "auto": null
+      },
+      {
+        "key": "elective_major_arthroplasty",
+        "points": 5,
+        "label_ru": "Плановое большое эндопротезирование сустава нижней конечности",
+        "auto": null
+      },
+      {
+        "key": "hip_pelvis_leg_fracture",
+        "points": 5,
+        "label_ru": "Перелом бедра, таза или голени",
+        "auto": null
+      },
+      {
+        "key": "acute_spinal_cord_injury_1m",
+        "points": 5,
+        "label_ru": "Острая травма спинного мозга (менее 1 месяца)",
+        "auto": null
+      }
+    ],
+    "risk_categories": [
+      {
+        "key": "very_low",
+        "label_ru": "Очень низкий",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "key": "low",
+        "label_ru": "Низкий",
+        "min": 1,
+        "max": 2
+      },
+      {
+        "key": "moderate",
+        "label_ru": "Умеренный",
+        "min": 3,
+        "max": 4
+      },
+      {
+        "key": "high",
+        "label_ru": "Высокий",
+        "min": 5,
+        "max": null
+      }
+    ]
+  },
+  "columbia": {
+    "version": 1,
+    "requires_clinical_validation": true,
+    "questions": [
+      {
+        "n": 1,
+        "text_ru": null
+      },
+      {
+        "n": 2,
+        "text_ru": null
+      },
+      {
+        "n": 3,
+        "text_ru": null
+      },
+      {
+        "n": 4,
+        "text_ru": null
+      },
+      {
+        "n": 5,
+        "text_ru": null
+      },
+      {
+        "n": 6,
+        "text_ru": null
+      },
+      {
+        "n": 7,
+        "text_ru": null
+      }
+    ],
+    "always_ask": [1, 2, 7],
+    "follow_up": [3, 4, 5, 6],
+    "follow_up_trigger": [1, 2],
+    "urgent_consult_rule": {
+      "all_yes": [4],
+      "any_yes": [5, 6],
+      "rule_text_ru": null
+    }
+  },
+  "nutrition": {
+    "version": 1,
+    "requires_clinical_validation": true,
+    "bmi_threshold": 20.5,
+    "questions": [
+      {
+        "key": "bmi_low",
+        "label_ru": "ИМТ ниже 20,5 кг/м²",
+        "auto": true
+      },
+      {
+        "key": "weight_loss",
+        "label_ru": "Потеря веса за последние 3 месяца",
+        "auto": false
+      },
+      {
+        "key": "reduced_intake",
+        "label_ru": "Снижение приёма пищи за последнюю неделю",
+        "auto": false
+      },
+      {
+        "key": "stress_factor",
+        "label_ru": "Стрессовый фактор / тяжесть заболевания",
+        "auto": false
+      }
+    ],
+    "total_rule": "count_yes"
+  },
+  "diets": [],
+  "default_diet": null,
+  "core_labs": ["HBsAg (HBV)", "anti-HCV", "RW", "ВИЧ", "ОАК", "Группа крови и резус"]
+}

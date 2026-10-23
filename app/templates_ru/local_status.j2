@@ -1,0 +1,8 @@
+{%- set l = facts.local -%}
+{%- if l.segment %}{{ l.segment }}{% if l.side_adv %} {{ l.side_adv }}{% endif %}. {% endif -%}
+{%- if l.inspection or data.local_status.inspection_text %}Осмотр: {{ (l.inspection + ([data.local_status.inspection_text] if data.local_status.inspection_text else [])) | join(', ') }}. {% endif -%}
+{%- if data.local_status.palpation %}Пальпация: {{ data.local_status.palpation }}. {% endif -%}
+{%- if l.rom %}Объём движений: {{ l.rom | join(', ') }}. {% endif -%}
+{%- if l.stability %}Стабильность: {{ l.stability | join('; ') }}. {% endif -%}
+{%- if l.neuro %}Дистальный нейроваскулярный статус: {{ l.neuro | join(', ') }}. {% endif -%}
+{%- if data.local_status.other %}{{ data.local_status.other }}{% endif -%}

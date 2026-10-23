@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { CaseDetail, Definitions, LabResult } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
@@ -111,6 +111,21 @@ export function CasePage() {
         {c.override_reason && <p className="mt-2 text-sm text-amber-900">{c.override_reason}</p>}
       </header>
 
+      <nav className="mt-4 flex flex-wrap gap-2" aria-label="Разделы карточки">
+        <Link
+          to={`/case/${c.id}/intake`}
+          className="inline-flex min-h-11 items-center rounded bg-teal-700 px-4 text-sm font-medium text-white"
+        >
+          {t('case.intake')}
+        </Link>
+        <Link
+          to={`/case/${c.id}/documents`}
+          className="inline-flex min-h-11 items-center rounded border border-teal-800 px-4 text-sm font-medium text-teal-900"
+        >
+          {t('case.documents')}
+        </Link>
+      </nav>
+
       <section className="mt-4 rounded border border-slate-300 bg-white p-4" aria-labelledby="chk">
         <h2 id="chk" className="text-lg font-semibold">
           {t('case.checklist')}
@@ -164,15 +179,30 @@ export function CasePage() {
             />
             {t('case.emergency')}
           </label>
-          <label className="mt-2 grid gap-1 text-sm font-medium">
-            {t('case.planned')}
-            <input
-              type="date"
-              defaultValue={c.planned_surgery_date ?? ''}
-              onChange={(e) => update.mutate({ planned_surgery_date: e.target.value || null })}
-              className="min-h-11 rounded border border-slate-400 px-2"
-            />
-          </label>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <label className="grid gap-1 text-sm font-medium">
+              {t('case.planned')}
+              <input
+                type="date"
+                defaultValue={c.planned_surgery_date ?? ''}
+                onChange={(e) => update.mutate({ planned_surgery_date: e.target.value || null })}
+                className="min-h-11 rounded border border-slate-400 px-2"
+              />
+            </label>
+            <label className="grid gap-1 text-sm font-medium">
+              {t('case.plannedTime')}
+              <input
+                type="time"
+                defaultValue={c.planned_surgery_time?.slice(0, 5) ?? ''}
+                onChange={(e) =>
+                  update.mutate({
+                    planned_surgery_time: e.target.value ? `${e.target.value}:00` : null,
+                  })
+                }
+                className="min-h-11 rounded border border-slate-400 px-2"
+              />
+            </label>
+          </div>
         </section>
       )}
 
@@ -254,6 +284,17 @@ export function CasePage() {
         </section>
       )}
 
+      {(user.role === 'anaesthesiologist' || user.role === 'head_of_department') && (
+        <AnaesthesiaForm caseId={c.id} type={c.anaesthesia_type} remarks={c.anaesthesia_remarks} />
+      )}
+      {user.role !== 'anaesthesiologist' &&
+        user.role !== 'head_of_department' &&
+        c.anaesthesia_type && (
+          <p className="mt-4 rounded border border-slate-300 bg-white p-3 text-sm">
+            {t('case.anaesthesiaType')}: <strong>{c.anaesthesia_type}</strong>
+          </p>
+        )}
+
       {editingKey && editingItem && (
         <ChecklistEditor
           key={`${editingKey}-${editingItem.updated_at}`}
@@ -278,5 +319,66 @@ function Field({ label, value }: { label: string; value: string }) {
       <dt className="text-slate-600">{label}:</dt>
       <dd className="font-medium">{value}</dd>
     </div>
+  )
+}
+
+function AnaesthesiaForm({
+  caseId,
+  type,
+  remarks,
+}: {
+  caseId: string
+  type: string | null
+  remarks: string | null
+}) {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const [typeValue, setType] = useState(type ?? '')
+  const [remarksValue, setRemarks] = useState(remarks ?? '')
+  const save = useMutation({
+    mutationFn: () =>
+      api.put<CaseDetail>(`/cases/${caseId}/anaesthesia`, {
+        type: typeValue || null,
+        remarks: remarksValue || null,
+      }),
+    onSuccess: (data) => queryClient.setQueryData(['case', caseId], data),
+  })
+  return (
+    <section className="mt-4 rounded border border-slate-300 bg-white p-4" aria-labelledby="an">
+      <h2 id="an" className="text-lg font-semibold">
+        {t('case.anaesthesia')}
+      </h2>
+      <label className="mt-2 grid gap-1 text-sm font-medium">
+        {t('case.anaesthesiaType')}
+        <input
+          value={typeValue}
+          maxLength={200}
+          onChange={(e) => setType(e.target.value)}
+          className="min-h-11 rounded border border-slate-400 px-3"
+        />
+      </label>
+      <label className="mt-2 grid gap-1 text-sm font-medium">
+        {t('case.anaesthesiaRemarks')}
+        <textarea
+          value={remarksValue}
+          maxLength={2000}
+          rows={2}
+          onChange={(e) => setRemarks(e.target.value)}
+          className="rounded border border-slate-400 p-2"
+        />
+      </label>
+      <button
+        type="button"
+        onClick={() => save.mutate()}
+        className="mt-2 min-h-11 rounded bg-teal-700 px-4 text-white"
+      >
+        {t('common.save')}
+      </button>
+      {save.isSuccess && (
+        <span role="status" className="ml-3 text-sm text-green-800">
+          {t('case.saved')}
+        </span>
+      )}
+    </section>
   )
 }

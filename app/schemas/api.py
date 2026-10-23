@@ -1,10 +1,19 @@
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from app.domain.enums import CaseStatus, ConsentType, ItemStatus, Role
+from app.domain.intake import IntakeData
+from app.schemas.config import (
+    CapriniConfig,
+    ColumbiaConfig,
+    NutritionConfig,
+    PsychoDefault,
+    Segment,
+    SystemDefault,
+)
 
 
 class ORMModel(BaseModel):
@@ -122,6 +131,7 @@ class CaseCreate(BaseModel):
     bed_id: uuid.UUID | None = None
     treating_doctor_id: uuid.UUID | None = None
     planned_surgery_date: date | None = None
+    planned_surgery_time: time | None = None
     is_emergency: bool = False
 
 
@@ -131,6 +141,7 @@ class CaseUpdate(BaseModel):
     bed_id: uuid.UUID | None = None
     treating_doctor_id: uuid.UUID | None = None
     planned_surgery_date: date | None = None
+    planned_surgery_time: time | None = None
     is_emergency: bool | None = None
     takes_anticoagulant: bool | None = None
 
@@ -174,6 +185,9 @@ class CaseOut(BaseModel):
     procedure_label: str
     side: str | None
     planned_surgery_date: date | None
+    planned_surgery_time: time | None
+    anaesthesia_type: str | None
+    anaesthesia_remarks: str | None
     is_emergency: bool
     takes_anticoagulant: bool
     admitted_at: datetime
@@ -279,3 +293,80 @@ class ProcedureOut(BaseModel):
 class DefinitionsOut(BaseModel):
     checklist: list[ColumnDef]
     procedures: list[ProcedureOut]
+
+
+class AnaesthesiaIn(BaseModel):
+    type: str | None = Field(default=None, max_length=200)
+    remarks: str | None = Field(default=None, max_length=2000)
+
+
+# ---- intake / documents ----
+class IntakeIn(BaseModel):
+    data: IntakeData
+    request_id: uuid.UUID
+    base_updated_at: AwareDatetime | None = None
+    completed: bool = False
+
+
+class IntakeOut(BaseModel):
+    data: IntakeData
+    schema_version: int
+    updated_at: datetime | None
+    completed_at: datetime | None
+    is_new: bool
+    can_edit: bool
+    derived: dict[str, object]
+
+
+class IntakeConfigOut(BaseModel):
+    picklists: dict[str, list[str]]
+    segments: list[Segment]
+    systems: dict[str, SystemDefault]
+    psycho: dict[str, PsychoDefault]
+    caprini: CapriniConfig
+    columbia: ColumbiaConfig
+    nutrition: NutritionConfig
+    diets: list[str]
+    default_diet: str | None
+    core_labs: list[str]
+
+
+class DocumentProblem(BaseModel):
+    code: str
+    message: str
+    key: str | None = None
+
+
+class DocumentSummary(BaseModel):
+    template_id: str
+    title_ru: str
+    status: Literal["awaiting_template", "not_generated", "generated", "outdated"]
+    can_generate: bool
+    problems: list[DocumentProblem]
+    generated_at: datetime | None
+    is_outdated: bool
+
+
+class DocumentField(BaseModel):
+    key: str
+    section: str
+    label: str
+    emr_type: str
+    critical: bool
+    display: str
+    value: str | None
+    items: list[str] | None
+    icd: list[dict[str, str]] | None
+    hint: str | None
+    missing: bool
+    copied: bool = False
+
+
+class DocumentOut(DocumentSummary):
+    changed_keys: list[str]
+    fields: list[DocumentField]
+    all_text: str
+
+
+class CopiedIn(BaseModel):
+    copied: bool

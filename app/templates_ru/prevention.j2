@@ -1,0 +1,3 @@
+{%- if facts.plan_meds.antibiotic %}Антибиотикопрофилактика: {{ facts.plan_meds.antibiotic | map(attribute='name') | join(', ') }}. {% endif -%}
+{%- if facts.plan_meds.vte %}Профилактика ВТЭ (Caprini {{ facts.caprini.total }}, {{ facts.caprini.category }}): {{ facts.plan_meds.vte | map(attribute='name') | join(', ') }}. {% endif -%}
+Ранняя мобилизация.

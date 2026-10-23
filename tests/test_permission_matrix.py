@@ -93,6 +93,34 @@ ENDPOINTS: list[tuple[str, str, Body, set[Role]]] = [
     ("GET", "/audit", lambda w: None, {R.ADMIN, R.HEAD_OF_DEPARTMENT}),
     ("GET", "/admin/config-status", lambda w: None, {R.ADMIN}),
     ("GET", "/config/definitions", lambda w: None, set(Role)),
+    ("GET", "/config/intake", lambda w: None, set(Role)),
+    ("GET", "/cases/{case}/intake", lambda w: None, CLINICAL),
+    (
+        "PUT",
+        "/cases/{case}/intake",
+        lambda w: {"data": {}, "request_id": str(uuid.uuid4())},
+        {R.DOCTOR, R.HEAD_OF_DEPARTMENT},
+    ),
+    ("GET", "/cases/{case}/documents", lambda w: None, CLINICAL),
+    ("GET", "/cases/{case}/documents/t1_primary_exam", lambda w: None, CLINICAL),
+    (
+        "POST",
+        "/cases/{case}/documents/t1_primary_exam/generate",
+        lambda w: {},
+        {R.DOCTOR, R.HEAD_OF_DEPARTMENT},
+    ),
+    (
+        "POST",
+        "/cases/{case}/documents/t1_primary_exam/copy-all",
+        lambda w: {},
+        {R.DOCTOR, R.HEAD_OF_DEPARTMENT},
+    ),
+    (
+        "PUT",
+        "/cases/{case}/anaesthesia",
+        lambda w: {"type": "Тест"},
+        {R.ANAESTHESIOLOGIST, R.HEAD_OF_DEPARTMENT},
+    ),
 ]
 
 
@@ -127,7 +155,8 @@ def test_matrix(
     api.as_role(role)
     response = api.request(method, path, json=body_factory(ctx))
     if role in allowed:
-        assert response.status_code < 400, (role, path, response.text)
+        # A permitted call may still be refused for data reasons (e.g. 422 generation_blocked).
+        assert response.status_code not in (401, 403), (role, path, response.text)
     else:
         assert response.status_code == 403, (role, path, response.status_code)
         assert response.json()["code"] == "forbidden"

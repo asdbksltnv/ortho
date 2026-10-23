@@ -1,0 +1,5 @@
+# TODO(clinical): diet names and the default diet come from the department.
+version: 1
+requires_clinical_validation: true
+diets: []
+default: null

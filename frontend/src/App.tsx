@@ -7,6 +7,9 @@ import { isClinical } from './lib/permissions'
 import { AuditPage } from './pages/AuditPage'
 import { BoardPage } from './pages/BoardPage'
 import { CasePage } from './pages/CasePage'
+import { DocumentPage } from './pages/DocumentPage'
+import { DocumentsPage } from './pages/DocumentsPage'
+import { IntakePage } from './pages/IntakePage'
 import { LoginPage } from './pages/LoginPage'
 import { NewCasePage } from './pages/NewCasePage'
 import { UsersPage } from './pages/admin/UsersPage'
@@ -52,6 +55,30 @@ export function App() {
           element={
             <Guard allow={isClinical}>
               <CasePage />
+            </Guard>
+          }
+        />
+        <Route
+          path="/case/:id/intake"
+          element={
+            <Guard allow={isClinical}>
+              <IntakePage />
+            </Guard>
+          }
+        />
+        <Route
+          path="/case/:id/documents"
+          element={
+            <Guard allow={isClinical}>
+              <DocumentsPage />
+            </Guard>
+          }
+        />
+        <Route
+          path="/case/:id/documents/:templateId"
+          element={
+            <Guard allow={isClinical}>
+              <DocumentPage />
             </Guard>
           }
         />

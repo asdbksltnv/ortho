@@ -89,6 +89,9 @@ export interface CaseDetail {
   procedure_label: string
   side: string | null
   planned_surgery_date: string | null
+  planned_surgery_time: string | null
+  anaesthesia_type: string | null
+  anaesthesia_remarks: string | null
   is_emergency: boolean
   takes_anticoagulant: boolean
   admitted_at: string
@@ -149,4 +152,41 @@ export interface LabResult {
   result_text: string
   collected_at: string
   valid_until: string | null
+}
+
+export interface DocumentProblem {
+  code: string
+  message: string
+  key: string | null
+}
+
+export interface DocumentSummary {
+  template_id: string
+  title_ru: string
+  status: 'awaiting_template' | 'not_generated' | 'generated' | 'outdated'
+  can_generate: boolean
+  problems: DocumentProblem[]
+  generated_at: string | null
+  is_outdated: boolean
+}
+
+export interface DocumentField {
+  key: string
+  section: string
+  label: string
+  emr_type: string
+  critical: boolean
+  display: 'value' | 'keep_emr' | 'calculate' | 'manual' | 'skip'
+  value: string | null
+  items: string[] | null
+  icd: { code: string; text: string }[] | null
+  hint: string | null
+  missing: boolean
+  copied: boolean
+}
+
+export interface DocumentDetail extends DocumentSummary {
+  changed_keys: string[]
+  fields: DocumentField[]
+  all_text: string
 }

@@ -14,7 +14,11 @@ export const baseMeta: Meta = {
   tz_display: 'Asia/Tashkent',
 }
 
-type Handler = (init: { method: string; body: unknown }) => { status?: number; body?: unknown }
+type Handler = (init: { method: string; body: unknown }) => {
+  status?: number
+  body?: unknown
+  networkError?: boolean
+}
 
 /** Routes fetch('/api/v1/<path>') calls to handlers keyed by "METHOD /path". */
 export function mockApi(handlers: Record<string, Handler | unknown>) {
@@ -33,6 +37,7 @@ export function mockApi(handlers: Record<string, Handler | unknown>) {
             body: init?.body ? JSON.parse(String(init.body)) : undefined,
           })
         : { body: entry }
+    if (result.networkError) return Promise.reject(new TypeError('Failed to fetch'))
     const status = result.status ?? 200
     return Promise.resolve({
       ok: status < 400,

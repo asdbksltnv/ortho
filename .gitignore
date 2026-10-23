@@ -12,3 +12,6 @@ frontend/dist/
 playwright-report/
 test-results/
 .DS_Store
+e2e/node_modules/
+e2e/.tmp/
+frontend/dev-dist/

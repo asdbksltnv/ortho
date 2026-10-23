@@ -16,6 +16,7 @@ class Perm(StrEnum):
     AUDIT_READ = "audit.read"
     KPI_READ = "kpi.read"
     CONFIG_STATUS_READ = "config.status.read"
+    ANAESTHESIA_WRITE = "anaesthesia.write"
 
 
 _CLINICAL_READERS = {
@@ -39,6 +40,7 @@ ROLE_PERMS: dict[Perm, frozenset[Role]] = {
     Perm.AUDIT_READ: frozenset({Role.ADMIN, Role.HEAD_OF_DEPARTMENT}),
     Perm.KPI_READ: frozenset({Role.HEAD_OF_DEPARTMENT, Role.HEAD_NURSE}),
     Perm.CONFIG_STATUS_READ: frozenset({Role.ADMIN}),
+    Perm.ANAESTHESIA_WRITE: frozenset({Role.ANAESTHESIOLOGIST, Role.HEAD_OF_DEPARTMENT}),
 }
 
 # Items a nurse may update besides those she owns: the consent received on the ward.

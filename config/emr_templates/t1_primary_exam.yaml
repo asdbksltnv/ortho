@@ -1,0 +1,78 @@
+# T1 Первичный врачебный осмотр в отделении (65 fields, 16 critical)
+# Field order mirrors the AccuracyMed screen exactly. Header fields (patient, doctor, date,
+# document number) are filled by AccuracyMed and are not part of this file.
+# source: form | generated | copy:<template>.<key> | board | schedule | staff | skip
+#         plus case / procedure (values from the case or the procedure template).
+# required: true = the app (not the EMR) needs the value before generation.
+
+id: "t1_primary_exam"
+title_ru: "Первичный врачебный осмотр в отделении"
+version: 1
+status: "ready"
+requires_clinical_validation: true
+fields:
+  - {"key": "complaints", "section": "Субъективная оценка / Жалобы", "label": "Основные жалобы", "emr_type": "text", "source": "generated", "generator": "complaints"}
+  - {"key": "history_brief", "section": "Анамнез морби", "label": "Краткая информация", "emr_type": "text", "source": "generated", "generator": "history_brief"}
+  - {"key": "course", "section": "Анамнез морби", "label": "Течение болезни", "emr_type": "line", "path": "history.course"}
+  - {"key": "hospitalization_count", "section": "Анамнез морби", "label": "По поводу данного заболевания госпитализирован (который раз)", "emr_type": "number", "critical": true, "path": "history.hospitalization_count"}
+  - {"key": "allergy_has", "section": "Аллергия", "label": "Есть аллергия?", "emr_type": "line", "critical": true, "path": "allergy.has", "format": "yesno"}
+  - {"key": "allergy_description", "section": "Аллергия", "label": "Описание аллергии", "emr_type": "text", "source": "generated", "generator": "allergy_description"}
+  - {"key": "past_history", "section": "Перенесённые операции и заболевания", "label": "Перенесённые операции и заболевания", "emr_type": "text", "critical": true, "source": "generated", "generator": "past_history"}
+  - {"key": "epidemiology", "section": "Перенесённые операции и заболевания", "label": "Эпидемиологический анамнез, трансфузии", "emr_type": "text", "source": "generated", "generator": "epidemiology"}
+  - {"key": "medications", "section": "Лекарственный анамнез", "label": "Медикаменты, которые принимает", "emr_type": "text", "critical": true, "source": "generated", "generator": "medications_taken"}
+  - {"key": "alcohol", "section": "Социальные факторы", "label": "Употребление алкоголя", "emr_type": "text", "source": "generated", "generator": "alcohol"}
+  - {"key": "tobacco", "section": "Социальные факторы", "label": "Употребление табака", "emr_type": "line", "path": "social.tobacco"}
+  - {"key": "drugs", "section": "Социальные факторы", "label": "Потребитель наркотиков", "emr_type": "text", "path": "social.drugs"}
+  - {"key": "socioeconomic", "section": "Социальные факторы", "label": "Социально-экономическая оценка", "emr_type": "line", "path": "social.economic"}
+  - {"key": "psycho_behavior", "section": "Психоэмоциональная оценка", "label": "Поведение", "emr_type": "line", "path": "psycho.behavior", "default_ru": "Адекватное"}
+  - {"key": "psycho_appearance", "section": "Психоэмоциональная оценка", "label": "Внешний вид", "emr_type": "line", "path": "psycho.appearance", "default_ru": "Опрятный"}
+  - {"key": "psycho_mood", "section": "Психоэмоциональная оценка", "label": "Настроение", "emr_type": "line", "path": "psycho.mood", "default_ru": "Ровное"}
+  - {"key": "psycho_emotions", "section": "Психоэмоциональная оценка", "label": "Эмоциональные реакции", "emr_type": "line", "path": "psycho.emotions", "default_ru": "Адекватные"}
+  - {"key": "psycho_understanding", "section": "Психоэмоциональная оценка", "label": "Понимание информации", "emr_type": "line", "path": "psycho.understanding", "default_ru": "Понимает в полном объёме"}
+  - {"key": "psycho_criticism", "section": "Психоэмоциональная оценка", "label": "Критика к своему заболеванию", "emr_type": "line", "path": "psycho.criticism", "default_ru": "Сохранена"}
+  - {"key": "bp", "section": "Физикальные показатели", "label": "Артериальное давление, мм рт.ст.", "emr_type": "text", "critical": true, "path": "vitals.bp"}
+  - {"key": "pulse", "section": "Физикальные показатели", "label": "Пульс", "emr_type": "number", "critical": true, "path": "vitals.pulse", "hint": "В EMR единица «Hz»; вводите уд/мин"}
+  - {"key": "hr", "section": "Физикальные показатели", "label": "Частота сердцебиения", "emr_type": "number", "critical": true, "path": "vitals.hr", "fallback_path": "vitals.pulse"}
+  - {"key": "rr", "section": "Физикальные показатели", "label": "Частота дыхания, в/мин", "emr_type": "number", "critical": true, "path": "vitals.rr"}
+  - {"key": "spo2", "section": "Физикальные показатели", "label": "Сатурация, SpO2 %", "emr_type": "number", "critical": true, "path": "vitals.spo2"}
+  - {"key": "temp", "section": "Физикальные показатели", "label": "Температура тела, °C", "emr_type": "number", "critical": true, "path": "vitals.temp"}
+  - {"key": "weight", "section": "Физикальные показатели", "label": "Вес, кг", "emr_type": "number", "path": "vitals.weight"}
+  - {"key": "height", "section": "Физикальные показатели", "label": "Рост, см", "emr_type": "number", "path": "vitals.height"}
+  - {"key": "bmi", "section": "Физикальные показатели", "label": "ИМТ", "emr_type": "calculate", "source": "skip"}
+  - {"key": "general_condition", "section": "Общее состояние", "label": "Описание", "emr_type": "text", "source": "generated", "generator": "general_condition"}
+  - {"key": "skin", "section": "Объективная оценка", "label": "Кожа", "emr_type": "text", "path": "systems.skin", "format": "system"}
+  - {"key": "cvs", "section": "Объективная оценка", "label": "ССС", "emr_type": "text", "path": "systems.cvs", "format": "system"}
+  - {"key": "resp", "section": "Объективная оценка", "label": "ДС", "emr_type": "text", "path": "systems.resp", "format": "system"}
+  - {"key": "msk", "section": "Объективная оценка", "label": "ОДС", "emr_type": "text", "path": "systems.msk", "format": "system"}
+  - {"key": "gu", "section": "Объективная оценка", "label": "МПС", "emr_type": "text", "path": "systems.gu", "format": "system"}
+  - {"key": "gi", "section": "Объективная оценка", "label": "ЖКТ", "emr_type": "text", "path": "systems.gi", "format": "system"}
+  - {"key": "neuro", "section": "Объективная оценка", "label": "Неврологическая система", "emr_type": "line", "path": "systems.neuro", "format": "system"}
+  - {"key": "columbia_q1", "section": "Шкала Columbia", "label": "Вопрос 1", "emr_type": "line", "path": "columbia.q1", "format": "yesno"}
+  - {"key": "columbia_q2", "section": "Шкала Columbia", "label": "Вопрос 2", "emr_type": "line", "path": "columbia.q2", "format": "yesno"}
+  - {"key": "columbia_q3", "section": "Шкала Columbia", "label": "Вопрос 3", "emr_type": "line", "path": "columbia.q3", "format": "yesno", "only_if": "columbia_followup"}
+  - {"key": "columbia_q4", "section": "Шкала Columbia", "label": "Вопрос 4", "emr_type": "line", "path": "columbia.q4", "format": "yesno", "only_if": "columbia_followup"}
+  - {"key": "columbia_q5", "section": "Шкала Columbia", "label": "Вопрос 5", "emr_type": "line", "path": "columbia.q5", "format": "yesno", "only_if": "columbia_followup"}
+  - {"key": "columbia_q6", "section": "Шкала Columbia", "label": "Вопрос 6", "emr_type": "line", "path": "columbia.q6", "format": "yesno", "only_if": "columbia_followup"}
+  - {"key": "columbia_q7", "section": "Шкала Columbia", "label": "Вопрос 7", "emr_type": "line", "path": "columbia.q7", "format": "yesno"}
+  - {"key": "nutrition_bmi_low", "section": "Нутриционный скрининг", "label": "ИМТ ниже 20,5 кг/м²", "emr_type": "line", "critical": true, "path": "nutrition.bmi_low", "format": "fact"}
+  - {"key": "nutrition_weight_loss", "section": "Нутриционный скрининг", "label": "Потеря веса за последние 3 месяца", "emr_type": "line", "critical": true, "path": "nutrition.weight_loss", "format": "yesno"}
+  - {"key": "nutrition_reduced_intake", "section": "Нутриционный скрининг", "label": "Снижение приёма пищи за последнюю неделю", "emr_type": "line", "critical": true, "path": "nutrition.reduced_intake", "format": "yesno"}
+  - {"key": "nutrition_stress", "section": "Нутриционный скрининг", "label": "Стрессовый фактор / тяжесть заболевания", "emr_type": "line", "critical": true, "path": "nutrition.stress_factor", "format": "yesno"}
+  - {"key": "nutrition_total", "section": "Нутриционный скрининг", "label": "Общий балл", "emr_type": "line", "critical": true, "path": "nutrition.total", "format": "fact"}
+  - {"key": "local_status", "section": "Локальный статус", "label": "Описание органа или системы", "emr_type": "text", "source": "generated", "generator": "local_status"}
+  - {"key": "dx_main", "section": "Диагноз", "label": "Основной", "emr_type": "icd10", "path": "diagnosis.main"}
+  - {"key": "dx_competing", "section": "Диагноз", "label": "Конкурирующий", "emr_type": "icd10", "path": "diagnosis.competing"}
+  - {"key": "dx_complication", "section": "Диагноз", "label": "Осложнение основного", "emr_type": "icd10", "path": "diagnosis.complication"}
+  - {"key": "dx_background", "section": "Диагноз", "label": "Фоновый", "emr_type": "icd10", "path": "diagnosis.background"}
+  - {"key": "dx_comorbid", "section": "Диагноз", "label": "Сопутствующий", "emr_type": "icd10", "path": "diagnosis.comorbid"}
+  - {"key": "plan_checked", "section": "План лечения", "label": "При госпитализации проверено", "emr_type": "checkcombo"}
+  - {"key": "treating_doctor", "section": "План лечения", "label": "Назначить лечащего врача", "emr_type": "staff", "source": "staff", "staff": "treating_doctor"}
+  - {"key": "goal", "section": "План лечения", "label": "Цели госпитализации", "emr_type": "line", "source": "generated", "generator": "goal"}
+  - {"key": "diet", "section": "План лечения", "label": "Диета", "emr_type": "line", "critical": true, "path": "plan.diet"}
+  - {"key": "special_diet", "section": "План лечения", "label": "Специальная диета", "emr_type": "text", "path": "plan.special_diet"}
+  - {"key": "labs", "section": "План лечения", "label": "Лабораторная диагностика", "emr_type": "service", "path": "plan.labs"}
+  - {"key": "instrumental", "section": "План лечения", "label": "Инструментальная диагностика", "emr_type": "service", "path": "plan.instrumental"}
+  - {"key": "consults", "section": "План лечения", "label": "Консультация специалиста", "emr_type": "service", "path": "plan.consults"}
+  - {"key": "medication_orders", "section": "План лечения", "label": "Медикаментозные назначения", "emr_type": "medication", "path": "plan.medications"}
+  - {"key": "recommendations", "section": "План лечения", "label": "Рекомендации", "emr_type": "text", "path": "plan.recommendations"}
+  - {"key": "resident", "section": "Подпись", "label": "Врач-резидент", "emr_type": "staff", "source": "staff", "staff": "author"}

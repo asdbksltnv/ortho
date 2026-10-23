@@ -12,9 +12,12 @@ main_diagnosis:
   icd10: null                # TODO(clinical)
   text_ru: null              # TODO(clinical)
 defaults:
-  complaints: {}             # TODO(clinical)
-  local_status: {}           # TODO(clinical)
-  plan: {}                   # TODO(clinical)
+  complaints: {}
+  local_status: {}
+  plan:
+    consults: ["Анестезиолог"]
+    # TODO(clinical): typical instrumental diagnostics, medications and recommendations
+caprini_defaults: []   # TODO(clinical): confirm
 surgery_texts:               # TODO(clinical)
   risks: null
   tactics: null

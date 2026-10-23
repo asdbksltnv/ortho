@@ -1,0 +1,60 @@
+# Normal-finding sentences, picklists and defaults for the bedside form.
+# TODO(clinical): items marked null were not provided by the department. Picklist wording below is
+# input vocabulary only and must be confirmed.
+version: 1
+requires_clinical_validation: true
+
+systems:                         # normal-finding sentence per system (T1 objective exam)
+  skin: {label_ru: "Кожа", normal_ru: null}        # TODO(clinical)
+  cvs: {label_ru: "ССС", normal_ru: null}          # TODO(clinical)
+  resp: {label_ru: "ДС", normal_ru: null}          # TODO(clinical)
+  msk: {label_ru: "ОДС", normal_ru: null}          # TODO(clinical)
+  gu: {label_ru: "МПС", normal_ru: null}           # TODO(clinical)
+  gi: {label_ru: "ЖКТ", normal_ru: null}           # TODO(clinical)
+  neuro: {label_ru: "Неврологическая система", normal_ru: "Без очаговой неврологической симптоматики"}
+
+psycho:                          # one tap sets all six to these defaults
+  behavior: {label_ru: "Поведение", default_ru: "Адекватное"}
+  appearance: {label_ru: "Внешний вид", default_ru: "Опрятный"}
+  mood: {label_ru: "Настроение", default_ru: "Ровное"}
+  emotions: {label_ru: "Эмоциональные реакции", default_ru: "Адекватные"}
+  understanding: {label_ru: "Понимание информации", default_ru: "Понимает в полном объёме"}
+  criticism: {label_ru: "Критика к своему заболеванию", default_ru: "Сохранена"}
+
+segments:                        # nominative and genitive forms for sentence generation
+  - {key: knee, name_ru: "коленный сустав", gen_ru: "коленного сустава"}
+  - {key: hip, name_ru: "тазобедренный сустав", gen_ru: "тазобедренного сустава"}
+  - {key: ankle, name_ru: "голеностопный сустав", gen_ru: "голеностопного сустава"}
+  - {key: shoulder, name_ru: "плечевой сустав", gen_ru: "плечевого сустава"}
+  - {key: elbow, name_ru: "локтевой сустав", gen_ru: "локтевого сустава"}
+  - {key: wrist, name_ru: "лучезапястный сустав", gen_ru: "лучезапястного сустава"}
+  - {key: thigh, name_ru: "бедро", gen_ru: "бедра"}
+  - {key: shin, name_ru: "голень", gen_ru: "голени"}
+  - {key: arm, name_ru: "плечо", gen_ru: "плеча"}
+  - {key: forearm, name_ru: "предплечье", gen_ru: "предплечья"}
+  - {key: foot, name_ru: "стопа", gen_ru: "стопы"}
+  - {key: hand, name_ru: "кисть", gen_ru: "кисти"}
+
+picklists:
+  course: ["острое", "прогрессирующее", "стабильное", "рецидивирующее"]
+  weight_bearing: ["полная", "с дополнительной опорой", "невозможна"]       # TODO(clinical)
+  alcohol: ["не употребляет", "эпизодически", "регулярно"]                  # TODO(clinical)
+  tobacco: ["не курит", "курит", "бросил(а)"]                               # TODO(clinical)
+  drugs: ["Отрицает", "Да"]
+  economic: ["благополучная", "удовлетворительная", "неблагополучная"]      # TODO(clinical)
+  economic_ability: ["достаточная", "ограниченная"]                         # TODO(clinical): wording
+  physical_activity: ["самостоятельно", "с опорой", "ограничена", "постельный режим"]
+  severity: ["удовлетворительное", "средней тяжести", "тяжёлое"]            # TODO(clinical)
+  consciousness: ["ясное", "нарушенное"]                                    # TODO(clinical)
+  position: ["активное", "пассивное", "вынужденное"]                        # TODO(clinical)
+  epidemiological: ["гемотрансфузии", "гепатит", "туберкулёз", "ВИЧ / ИППП", "контакт с инфекционными больными"]  # TODO(clinical)
+  inspection: ["деформация", "отёк", "гиперемия", "ссадины / раны", "послеоперационные рубцы"]  # TODO(clinical)
+  movements: ["сгибание", "разгибание", "отведение", "приведение", "наружная ротация", "внутренняя ротация"]
+  stability_result: ["отрицательный", "положительный"]
+  pulsation: ["сохранена", "ослаблена", "отсутствует"]
+  sensation: ["сохранена", "снижена", "отсутствует"]
+  motor: ["сохранены", "ограничены", "отсутствуют"]
+  social_needs: ["уход дома", "транспорт", "нет"]
+  psychological_needs: ["нет", "тревога перед операцией", "нужны разъяснения"]
+  discharge_needs: ["ходунки", "костыли", "реабилитация", "перевязки", "контрольный осмотр"]
+  consults: ["Анестезиолог", "Терапевт"]

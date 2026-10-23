@@ -113,6 +113,7 @@ def create_case(
         procedure_key=data.procedure_key,
         side=data.side,
         planned_surgery_date=data.planned_surgery_date,
+        planned_surgery_time=data.planned_surgery_time,
         is_emergency=data.is_emergency,
         status=CaseStatus.ADMITTED.value,
     )

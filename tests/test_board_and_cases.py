@@ -342,3 +342,20 @@ def test_naive_datetime_is_rejected_for_labs(api: Api, case_id: uuid.UUID) -> No
         json={"lab_code": "hiv", "result_text": "x", "collected_at": "2026-03-01T08:00:00"},
     )
     assert resp.status_code == 422
+
+
+def test_cases_without_a_bed_are_listed_last(api: Api, case_id: uuid.UUID) -> None:
+    api.as_role(Role.DOCTOR)
+    api.post(
+        "/cases",
+        json=case_payload(
+            patient={
+                "full_name": "Без Койки",
+                "birth_date": "1970-01-01",
+                "sex": "M",
+                "medical_record_number": "T-9",
+            }
+        ),
+    )
+    rows = api.get("/board").json()["rows"]
+    assert [r["bed_label"] for r in rows] == ["к. 1", None]

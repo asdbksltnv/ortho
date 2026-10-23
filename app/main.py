@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import __version__
-from app.api import audit_routes, auth_routes, cases, health, meta, users, wards
+from app.api import audit_routes, auth_routes, cases, documents, health, intake, meta, users, wards
 from app.api.errors import register_error_handlers
 from app.logging_config import configure_logging
 from app.security import security_headers
@@ -33,7 +33,7 @@ def create_app() -> FastAPI:
     get_config()  # fail fast on invalid clinical configuration
 
     app.include_router(health.router, prefix="/api")
-    for module in (meta, auth_routes, users, wards, cases, audit_routes):
+    for module in (meta, auth_routes, users, wards, cases, intake, documents, audit_routes):
         app.include_router(module.router, prefix="/api/v1")
 
     _mount_frontend(app, Path(settings.frontend_dist))

@@ -1,7 +1,7 @@
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, time
 
-from sqlalchemy import Boolean, Date, ForeignKey, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import Boolean, Date, ForeignKey, String, Text, Time, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -31,6 +31,9 @@ class Case(Base, ClinicalMixin):
     procedure_key: Mapped[str] = mapped_column(String(64))
     side: Mapped[str | None] = mapped_column(String(16), nullable=True)  # left | right | both
     planned_surgery_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    planned_surgery_time: Mapped[time | None] = mapped_column(Time, nullable=True)
+    anaesthesia_type: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    anaesthesia_remarks: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), default=CaseStatus.ADMITTED.value, index=True)
     is_emergency: Mapped[bool] = mapped_column(Boolean, default=False)
     takes_anticoagulant: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -101,3 +104,39 @@ class AuditLog(Base):
     entity_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
     diff: Mapped[dict[str, object] | None] = mapped_column(JSONType, nullable=True)
     ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class IntakeForm(Base, ClinicalMixin):
+    """Bedside intake form; `data` follows app.domain.intake.IntakeData."""
+
+    __tablename__ = "intake_forms"
+
+    case_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("cases.id"), unique=True, index=True
+    )
+    schema_version: Mapped[int] = mapped_column(default=1)
+    data: Mapped[dict[str, object]] = mapped_column(JSONType)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class GeneratedDocument(Base, ClinicalMixin):
+    __tablename__ = "generated_documents"
+    __table_args__ = (UniqueConstraint("case_id", "template_id", name="uq_document_case_template"),)
+
+    case_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("cases.id"), index=True)
+    template_id: Mapped[str] = mapped_column(String(64))
+    template_version: Mapped[int] = mapped_column(default=1)
+    # list of rendered fields in EMR order; each has a "copied" flag
+    fields: Mapped[list[dict[str, object]]] = mapped_column(JSONType)
+    generated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    is_outdated: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class IdempotencyKey(Base):
+    """Client-generated request ids so queued offline saves are applied at most once."""
+
+    __tablename__ = "idempotency_keys"
+
+    key: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    case_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("cases.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

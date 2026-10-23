@@ -1,0 +1,73 @@
+# T3 Предоперационный эпикриз (58 fields, 2 critical). Generated only when the board items
+# in gating_items are done, so it never cites pending results.
+# Field order mirrors the AccuracyMed screen exactly. Header fields (patient, doctor, date,
+# document number) are filled by AccuracyMed and are not part of this file.
+# source: form | generated | copy:<template>.<key> | board | schedule | staff | skip
+#         plus case / procedure (values from the case or the procedure template).
+# required: true = the app (not the EMR) needs the value before generation.
+
+id: "t3_preop_epicrisis"
+title_ru: "Предоперационный эпикриз"
+version: 1
+status: "ready"
+requires_clinical_validation: true
+gating_items: ["labs_core", "consults", "anaesthesia"]
+fields:
+  - {"key": "complaints", "section": "Жалобы", "label": "Основные жалобы", "emr_type": "text", "source": "copy:t1_primary_exam.complaints"}
+  - {"key": "history_brief", "section": "Анамнез морби", "label": "Краткая информация", "emr_type": "text", "source": "copy:t1_primary_exam.history_brief"}
+  - {"key": "course", "section": "Анамнез морби", "label": "Течение болезни", "emr_type": "line", "source": "copy:t1_primary_exam.course"}
+  - {"key": "allergy_has", "section": "Аллергия", "label": "Есть аллергия?", "emr_type": "line", "source": "copy:t1_primary_exam.allergy_has"}
+  - {"key": "allergy_description", "section": "Аллергия", "label": "Описание аллергии", "emr_type": "text", "source": "copy:t1_primary_exam.allergy_description"}
+  - {"key": "past_history", "section": "Перенесённые операции и заболевания", "label": "Перенесённые операции и заболевания", "emr_type": "text", "source": "copy:t1_primary_exam.past_history"}
+  - {"key": "epidemiology", "section": "Перенесённые операции и заболевания", "label": "Эпидемиологический анамнез, трансфузии", "emr_type": "text", "source": "copy:t1_primary_exam.epidemiology", "emr_prefill": true, "keep_if_empty": true}
+  - {"key": "medications", "section": "Лекарственный анамнез", "label": "Медикаменты, которые принимает", "emr_type": "text", "source": "copy:t1_primary_exam.medications"}
+  - {"key": "alcohol", "section": "Социальные факторы", "label": "Употребление алкоголя", "emr_type": "text", "source": "copy:t1_primary_exam.alcohol"}
+  - {"key": "tobacco", "section": "Социальные факторы", "label": "Употребление табака", "emr_type": "line", "source": "copy:t1_primary_exam.tobacco"}
+  - {"key": "drugs", "section": "Социальные факторы", "label": "Потребитель наркотиков", "emr_type": "text", "source": "copy:t1_primary_exam.drugs"}
+  - {"key": "physical_activity", "section": "Социальные факторы", "label": "Физическая активность", "emr_type": "line", "source": "copy:t2_diagnosis_justification.physical_activity"}
+  - {"key": "socioeconomic", "section": "Социальные факторы", "label": "Социально-экономическая оценка", "emr_type": "line", "source": "copy:t1_primary_exam.socioeconomic", "critical": true}
+  - {"key": "economic_ability", "section": "Потребности пациента", "label": "Оценка экономической возможности", "emr_type": "line", "critical": true, "path": "preop.economic_assessment", "hint": "TODO(clinical): формулировки"}
+  - {"key": "social_needs", "section": "Потребности пациента", "label": "Социальные потребности", "emr_type": "text", "path": "preop.social_needs"}
+  - {"key": "psychological_needs", "section": "Потребности пациента", "label": "Психологические потребности", "emr_type": "text", "path": "preop.psychological_needs"}
+  - {"key": "bp", "section": "Физикальные показатели", "label": "Артериальное давление, мм рт.ст.", "emr_type": "text", "path": "preop.vitals.bp", "required": true}
+  - {"key": "pulse", "section": "Физикальные показатели", "label": "Пульс", "emr_type": "number", "path": "preop.vitals.pulse", "required": true, "hint": "В EMR единица «Hz»; вводите уд/мин"}
+  - {"key": "hr", "section": "Физикальные показатели", "label": "Частота сердцебиения", "emr_type": "number", "path": "preop.vitals.hr", "required": true, "fallback_path": "preop.vitals.pulse"}
+  - {"key": "rr", "section": "Физикальные показатели", "label": "Частота дыхания, в/мин", "emr_type": "number", "path": "preop.vitals.rr", "required": true}
+  - {"key": "spo2", "section": "Физикальные показатели", "label": "Сатурация, SpO2 %", "emr_type": "number", "path": "preop.vitals.spo2", "required": true}
+  - {"key": "temp", "section": "Физикальные показатели", "label": "Температура тела, °C", "emr_type": "number", "path": "preop.vitals.temp", "required": true}
+  - {"key": "weight", "section": "Физикальные показатели", "label": "Вес, кг", "emr_type": "number", "path": "preop.vitals.weight", "required": true}
+  - {"key": "height", "section": "Физикальные показатели", "label": "Рост, см", "emr_type": "number", "path": "preop.vitals.height", "required": true}
+  - {"key": "bmi", "section": "Физикальные показатели", "label": "ИМТ", "emr_type": "calculate", "source": "skip"}
+  - {"key": "general_condition", "section": "Общее состояние", "label": "Описание", "emr_type": "text", "source": "copy:t1_primary_exam.general_condition", "override_path": "preop.general_condition"}
+  - {"key": "psych_assessment", "section": "Психологическая оценка", "label": "Психологическая оценка", "emr_type": "checkcombo"}
+  - {"key": "skin", "section": "Объективная оценка", "label": "Кожа", "emr_type": "text", "path": "systems.skin", "format": "system", "emr_prefill": true}
+  - {"key": "cvs", "section": "Объективная оценка", "label": "ССС", "emr_type": "text", "path": "systems.cvs", "format": "system", "emr_prefill": true}
+  - {"key": "resp", "section": "Объективная оценка", "label": "ДС", "emr_type": "text", "path": "systems.resp", "format": "system", "emr_prefill": true}
+  - {"key": "msk", "section": "Объективная оценка", "label": "ОДС", "emr_type": "text", "path": "systems.msk", "format": "system", "emr_prefill": true}
+  - {"key": "gu", "section": "Объективная оценка", "label": "МПС", "emr_type": "text", "path": "systems.gu", "format": "system", "emr_prefill": true}
+  - {"key": "gi", "section": "Объективная оценка", "label": "ЖКТ", "emr_type": "text", "path": "systems.gi", "format": "system", "emr_prefill": true}
+  - {"key": "neuro", "section": "Объективная оценка", "label": "Неврологическая система", "emr_type": "line", "path": "systems.neuro", "format": "system", "emr_prefill": true}
+  - {"key": "local_status", "section": "Локальный статус", "label": "Описание органа или системы", "emr_type": "text", "source": "copy:t1_primary_exam.local_status", "override_path": "preop.local_status"}
+  - {"key": "studies", "section": "Исследования", "label": "Инструментальные и лабораторные обследования", "emr_type": "service", "source": "board"}
+  - {"key": "endo_course", "section": "Процедура эндоскопии", "label": "Ход процедуры", "emr_type": "text", "source": "skip"}
+  - {"key": "endo_conclusion", "section": "Процедура эндоскопии", "label": "Заключение", "emr_type": "text", "source": "skip"}
+  - {"key": "endo_recommendation", "section": "Процедура эндоскопии", "label": "Рекомендация", "emr_type": "text", "source": "skip"}
+  - {"key": "indication", "section": "Операция", "label": "Показание к операции", "emr_type": "text", "source": "generated", "generator": "indication"}
+  - {"key": "operation_name", "section": "Операция", "label": "Название операции", "emr_type": "text", "source": "generated", "generator": "operation_name"}
+  - {"key": "risks", "section": "Операция", "label": "Риски операции", "emr_type": "text", "source": "procedure", "path": "surgery_texts.risks", "hint": "TODO(clinical): текст задаёт отделение"}
+  - {"key": "risk_factors", "section": "Операция", "label": "Факторы риска у пациента", "emr_type": "text", "source": "generated", "generator": "risk_factors"}
+  - {"key": "dx_main", "section": "Предоперационный диагноз", "label": "Основной", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_main"}
+  - {"key": "dx_competing", "section": "Предоперационный диагноз", "label": "Конкурирующий", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_competing"}
+  - {"key": "dx_complication", "section": "Предоперационный диагноз", "label": "Осложнение основного", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_complication"}
+  - {"key": "dx_background", "section": "Предоперационный диагноз", "label": "Фоновый", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_background"}
+  - {"key": "dx_comorbid", "section": "Предоперационный диагноз", "label": "Сопутствующий", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_comorbid"}
+  - {"key": "or_time", "section": "Операция", "label": "Время операции", "emr_type": "datetime", "source": "schedule"}
+  - {"key": "tactics", "section": "Операция", "label": "Тактика и объём операции", "emr_type": "text", "source": "procedure", "path": "surgery_texts.tactics", "hint": "TODO(clinical)"}
+  - {"key": "technical_difficulties", "section": "Операция", "label": "Ожидаемые технические трудности", "emr_type": "text", "source": "procedure", "path": "surgery_texts.technical_difficulties", "hint": "TODO(clinical)"}
+  - {"key": "likely_complications", "section": "Операция", "label": "Вероятные послеоперационные осложнения", "emr_type": "text", "source": "procedure", "path": "surgery_texts.likely_complications", "hint": "TODO(clinical)"}
+  - {"key": "prevention", "section": "Операция", "label": "Профилактика послеоперационных осложнений", "emr_type": "text", "source": "generated", "generator": "prevention"}
+  - {"key": "anaesthesia_type", "section": "Операция", "label": "Тип обезболивания", "emr_type": "line", "source": "case", "path": "anaesthesia_type"}
+  - {"key": "expected_blood_loss", "section": "Операция", "label": "Ожидаемый объём кровопотери", "emr_type": "text", "source": "procedure", "path": "surgery_texts.expected_blood_loss", "hint": "TODO(clinical)"}
+  - {"key": "discharge_needs", "section": "Операция", "label": "Потребности пациента при выписке", "emr_type": "text", "path": "preop.discharge_needs", "format": "list_text"}
+  - {"key": "head", "section": "Подпись", "label": "Заведующий отделением", "emr_type": "staff", "source": "staff", "staff": "head"}
+  - {"key": "resident", "section": "Подпись", "label": "Врач-резидент", "emr_type": "staff", "source": "staff", "staff": "author"}

@@ -1,0 +1,3 @@
+{%- if facts.dx_main %}Диагноз: {{ facts.dx_main }}. {% endif -%}
+{%- if data.preop.imaging %}Данные визуализации: {{ data.preop.imaging }}. {% endif -%}
+{%- if data.preop.failed_conservative %}Консервативное лечение: {{ data.preop.failed_conservative }}.{% endif -%}

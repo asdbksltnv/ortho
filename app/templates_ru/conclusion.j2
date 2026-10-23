@@ -1,0 +1,9 @@
+{%- set parts = [] -%}
+{%- if facts.complaint_items %}{% set _ = parts.append('жалоб на ' ~ (facts.complaint_items | join(', '))) %}{% endif -%}
+{%- if facts.history_core %}{% set _ = parts.append('анамнеза (' ~ facts.history_core ~ ')') %}{% endif -%}
+{%- if facts.local_key %}{% set _ = parts.append('данных объективного осмотра (' ~ facts.local_key ~ ')') %}{% endif -%}
+{%- if facts.studies_cited %}{% set _ = parts.append('результатов исследований (' ~ (facts.studies_cited | join(', ')) ~ ')') %}{% endif -%}
+{%- if facts.dx_main -%}
+{%- if parts %}На основании {{ parts | join(', ') }} выставлен диагноз: {{ facts.dx_main }}.
+{%- else %}Выставлен диагноз: {{ facts.dx_main }}.{% endif -%}
+{%- endif -%}

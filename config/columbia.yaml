@@ -1,0 +1,20 @@
+# Columbia Suicide Severity Rating Scale screen, 7 questions (BUILD_PROMPT 6.2).
+version: 1
+requires_clinical_validation: true
+questions:
+  # TODO(clinical): question wording must be copied from the department's EMR template.
+  - {n: 1, text_ru: null}
+  - {n: 2, text_ru: null}
+  - {n: 3, text_ru: null}
+  - {n: 4, text_ru: null}
+  - {n: 5, text_ru: null}
+  - {n: 6, text_ru: null}
+  - {n: 7, text_ru: null}
+always_ask: [1, 2, 7]
+follow_up: [3, 4, 5, 6]          # shown only when question 1 or 2 is «да»
+follow_up_trigger: [1, 2]
+# Appendix B default, flagged TODO(clinical): alert if Q4 = Да and (Q5 or Q6) = Да.
+urgent_consult_rule:
+  all_yes: [4]
+  any_yes: [5, 6]
+  rule_text_ru: null             # TODO(clinical): wording of the EMR note

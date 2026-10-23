@@ -1,0 +1,59 @@
+# T2 Обоснование диагноза (45 fields, none critical in the EMR;
+# the app requires «Заключение» and the main diagnosis)
+# Field order mirrors the AccuracyMed screen exactly. Header fields (patient, doctor, date,
+# document number) are filled by AccuracyMed and are not part of this file.
+# source: form | generated | copy:<template>.<key> | board | schedule | staff | skip
+#         plus case / procedure (values from the case or the procedure template).
+# required: true = the app (not the EMR) needs the value before generation.
+
+id: "t2_diagnosis_justification"
+title_ru: "Обоснование диагноза"
+version: 1
+status: "ready"
+requires_clinical_validation: true
+fields:
+  - {"key": "complaints", "section": "Жалобы", "label": "Основные жалобы", "emr_type": "text", "source": "copy:t1_primary_exam.complaints"}
+  - {"key": "history_brief", "section": "Анамнез морби", "label": "Краткая информация", "emr_type": "text", "source": "copy:t1_primary_exam.history_brief"}
+  - {"key": "course", "section": "Анамнез морби", "label": "Течение болезни", "emr_type": "line", "source": "copy:t1_primary_exam.course"}
+  - {"key": "allergy_has", "section": "Аллергия", "label": "Есть аллергия?", "emr_type": "line", "source": "copy:t1_primary_exam.allergy_has"}
+  - {"key": "allergy_description", "section": "Аллергия", "label": "Описание аллергии", "emr_type": "text", "source": "copy:t1_primary_exam.allergy_description"}
+  - {"key": "past_history", "section": "Перенесённые операции и заболевания", "label": "Перенесённые операции и заболевания", "emr_type": "text", "source": "copy:t1_primary_exam.past_history"}
+  - {"key": "epidemiology", "section": "Перенесённые операции и заболевания", "label": "Эпидемиологический анамнез, трансфузии", "emr_type": "text", "source": "copy:t1_primary_exam.epidemiology"}
+  - {"key": "medications", "section": "Лекарственный анамнез", "label": "Медикаменты, которые принимает", "emr_type": "text", "source": "copy:t1_primary_exam.medications"}
+  - {"key": "medication_status", "section": "Лекарственный анамнез", "label": "Статус", "emr_type": "line", "default_ru": "Сверено", "hint": "Значение по умолчанию; TODO(clinical): подтвердить смысл поля"}
+  - {"key": "alcohol", "section": "Социальные факторы", "label": "Употребление алкоголя", "emr_type": "text", "source": "copy:t1_primary_exam.alcohol"}
+  - {"key": "tobacco", "section": "Социальные факторы", "label": "Употребление табака", "emr_type": "line", "source": "copy:t1_primary_exam.tobacco"}
+  - {"key": "drugs", "section": "Социальные факторы", "label": "Потребитель наркотиков", "emr_type": "text", "source": "copy:t1_primary_exam.drugs"}
+  - {"key": "physical_activity", "section": "Социальные факторы", "label": "Физическая активность", "emr_type": "line", "path": "social.physical_activity"}
+  - {"key": "socioeconomic", "section": "Социальные факторы", "label": "Социально-экономическая оценка", "emr_type": "line", "source": "copy:t1_primary_exam.socioeconomic"}
+  - {"key": "bp", "section": "Физикальные показатели", "label": "Артериальное давление, мм рт.ст.", "emr_type": "text", "path": "latest_vitals.bp"}
+  - {"key": "pulse", "section": "Физикальные показатели", "label": "Пульс", "emr_type": "number", "path": "latest_vitals.pulse", "hint": "В EMR единица «Hz»; вводите уд/мин"}
+  - {"key": "hr", "section": "Физикальные показатели", "label": "Частота сердцебиения", "emr_type": "number", "path": "latest_vitals.hr", "fallback_path": "latest_vitals.pulse"}
+  - {"key": "rr", "section": "Физикальные показатели", "label": "Частота дыхания, в/мин", "emr_type": "number", "path": "latest_vitals.rr"}
+  - {"key": "spo2", "section": "Физикальные показатели", "label": "Сатурация, SpO2 %", "emr_type": "number", "path": "latest_vitals.spo2"}
+  - {"key": "temp", "section": "Физикальные показатели", "label": "Температура тела, °C", "emr_type": "number", "path": "latest_vitals.temp"}
+  - {"key": "weight", "section": "Физикальные показатели", "label": "Вес, кг", "emr_type": "number", "path": "latest_vitals.weight"}
+  - {"key": "height", "section": "Физикальные показатели", "label": "Рост, см", "emr_type": "number", "path": "latest_vitals.height"}
+  - {"key": "bmi", "section": "Физикальные показатели", "label": "ИМТ", "emr_type": "calculate", "source": "skip"}
+  - {"key": "general_condition", "section": "Общее состояние", "label": "Описание", "emr_type": "text", "source": "copy:t1_primary_exam.general_condition"}
+  - {"key": "skin", "section": "Объективная оценка", "label": "Кожа", "emr_type": "text", "source": "copy:t1_primary_exam.skin"}
+  - {"key": "cvs", "section": "Объективная оценка", "label": "ССС", "emr_type": "text", "source": "copy:t1_primary_exam.cvs"}
+  - {"key": "resp", "section": "Объективная оценка", "label": "ДС", "emr_type": "text", "source": "copy:t1_primary_exam.resp"}
+  - {"key": "msk", "section": "Объективная оценка", "label": "ОДС", "emr_type": "text", "source": "copy:t1_primary_exam.msk"}
+  - {"key": "gu", "section": "Объективная оценка", "label": "МПС", "emr_type": "text", "source": "copy:t1_primary_exam.gu"}
+  - {"key": "gi", "section": "Объективная оценка", "label": "ЖКТ", "emr_type": "text", "source": "copy:t1_primary_exam.gi"}
+  - {"key": "neuro", "section": "Объективная оценка", "label": "Неврологическая система", "emr_type": "line", "source": "copy:t1_primary_exam.neuro"}
+  - {"key": "local_status", "section": "Локальный статус", "label": "Описание органа или системы", "emr_type": "text", "source": "copy:t1_primary_exam.local_status"}
+  - {"key": "studies", "section": "Исследования", "label": "Инструментальные и лабораторные обследования", "emr_type": "service", "source": "board"}
+  - {"key": "endo_course", "section": "Процедура эндоскопии", "label": "Ход процедуры", "emr_type": "text", "source": "skip"}
+  - {"key": "endo_conclusion", "section": "Процедура эндоскопии", "label": "Заключение", "emr_type": "text", "source": "skip"}
+  - {"key": "endo_recommendation", "section": "Процедура эндоскопии", "label": "Рекомендация", "emr_type": "text", "source": "skip"}
+  - {"key": "conclusion", "section": "Заключение", "label": "Заключение", "emr_type": "text", "source": "generated", "generator": "conclusion", "required": true}
+  - {"key": "dx_main", "section": "Диагноз", "label": "Основной", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_main", "required": true}
+  - {"key": "dx_competing", "section": "Диагноз", "label": "Конкурирующий", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_competing"}
+  - {"key": "dx_complication", "section": "Диагноз", "label": "Осложнение основного", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_complication"}
+  - {"key": "dx_background", "section": "Диагноз", "label": "Фоновый", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_background"}
+  - {"key": "dx_comorbid", "section": "Диагноз", "label": "Сопутствующий", "emr_type": "icd10", "source": "copy:t1_primary_exam.dx_comorbid"}
+  - {"key": "recommendations", "section": "Диагноз", "label": "Рекомендации", "emr_type": "text", "path": "plan.recommendations"}
+  - {"key": "head", "section": "Подпись", "label": "Заведующий отделением", "emr_type": "staff", "source": "staff", "staff": "head"}
+  - {"key": "resident", "section": "Подпись", "label": "Врач-резидент", "emr_type": "staff", "source": "staff", "staff": "author"}

@@ -1,0 +1,1 @@
+{%- if facts.epi_items or data.past.epidemiological_other %}Эпидемиологический анамнез: {{ (facts.epi_items + ([data.past.epidemiological_other] if data.past.epidemiological_other else [])) | join(', ') }}.{% endif -%}

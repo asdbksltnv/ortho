@@ -1,0 +1,4 @@
+{%- if facts.onset_date_ru %}Дата начала заболевания / травмы: {{ facts.onset_date_ru }}. {% endif -%}
+{%- if data.history.mechanism %}Механизм: {{ data.history.mechanism }}. {% endif -%}
+{%- if data.history.duration %}Длительность: {{ data.history.duration }}. {% endif -%}
+{%- if data.history.prior_treatment %}Предшествующее лечение: {{ data.history.prior_treatment }}.{% endif -%}

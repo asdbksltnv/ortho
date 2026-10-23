@@ -1,0 +1,7 @@
+# Template not received yet. Add the field map here (fields: [...]) and set status: ready; no code changes needed.
+id: t4_patient_verification
+title_ru: "Patient verification"
+version: 1
+status: awaiting_template
+requires_clinical_validation: true
+fields: []

@@ -81,7 +81,8 @@ def build_board(
                 },
             )
         )
-    rows.sort(key=lambda r: (r.room_name or "~", r.bed_label or "~"))
+    # Cases without a bed go last ("~" would sort before Cyrillic letters).
+    rows.sort(key=lambda r: (r.room_name is None, r.room_name or "", r.bed_label or ""))
     return BoardOut(
         columns=[
             ColumnDef(

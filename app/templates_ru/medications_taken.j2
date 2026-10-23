@@ -1,0 +1,2 @@
+{%- if data.medications_none %}Постоянно лекарственные препараты не принимает.
+{%- elif facts.med_items %}{{ facts.med_items | join('; ') }}.{% endif -%}

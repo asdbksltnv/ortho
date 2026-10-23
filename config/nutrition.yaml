@@ -1,0 +1,11 @@
+# Nutrition screen: 4 yes/no questions (BUILD_PROMPT 6.2).
+version: 1
+requires_clinical_validation: true
+bmi_threshold: 20.5              # «ИМТ ниже 20,5», answered automatically from weight and height
+questions:
+  - {key: bmi_low, label_ru: "ИМТ ниже 20,5 кг/м²", auto: true}
+  - {key: weight_loss, label_ru: "Потеря веса за последние 3 месяца"}
+  - {key: reduced_intake, label_ru: "Снижение приёма пищи за последнюю неделю"}
+  - {key: stress_factor, label_ru: "Стрессовый фактор / тяжесть заболевания"}
+# Appendix B default, flagged TODO(clinical): «Общий балл» = number of «Да» answers.
+total_rule: count_yes

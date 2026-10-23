@@ -1,0 +1,2 @@
+{%- if data.allergy.has == false %}Аллергические реакции отрицает.
+{%- elif data.allergy.has and data.allergy.description %}{{ data.allergy.description }}{% endif -%}

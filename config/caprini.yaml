@@ -1,0 +1,52 @@
+# Caprini 2005 risk assessment model, as given in BUILD_PROMPT section 7.
+# TODO(clinical): the department's own Caprini sheet (EMR template T5) will replace this file.
+version: 1
+requires_clinical_validation: true
+model: "Caprini 2005"
+factors:
+  # 1 point
+  - {key: age_41_60, points: 1, label_ru: "Возраст 41–60 лет", auto: {type: age, min: 41, max: 60}}
+  - {key: minor_surgery, points: 1, label_ru: "Малая операция"}
+  - {key: bmi_over_25, points: 1, label_ru: "ИМТ более 25 кг/м²", auto: {type: bmi_over, value: 25}}
+  - {key: swollen_legs, points: 1, label_ru: "Отёки нижних конечностей"}
+  - {key: varicose_veins, points: 1, label_ru: "Варикозное расширение вен"}
+  - {key: pregnancy_postpartum, points: 1, label_ru: "Беременность или послеродовой период"}
+  - {key: recurrent_abortion, points: 1, label_ru: "Необъяснимые или повторные самопроизвольные аборты в анамнезе"}
+  - {key: hormones, points: 1, label_ru: "Оральные контрацептивы или гормональная заместительная терапия"}
+  - {key: sepsis_1m, points: 1, label_ru: "Сепсис (менее 1 месяца)"}
+  - {key: lung_disease_1m, points: 1, label_ru: "Серьёзное заболевание лёгких, включая пневмонию (менее 1 месяца)"}
+  - {key: abnormal_pulmonary_function, points: 1, label_ru: "Нарушение функции лёгких"}
+  - {key: acute_mi, points: 1, label_ru: "Острый инфаркт миокарда"}
+  - {key: chf_1m, points: 1, label_ru: "Застойная сердечная недостаточность (менее 1 месяца)"}
+  - {key: ibd_history, points: 1, label_ru: "Воспалительное заболевание кишечника в анамнезе"}
+  - {key: medical_bed_rest, points: 1, label_ru: "Терапевтический пациент, постельный режим"}
+  # 2 points
+  - {key: age_61_74, points: 2, label_ru: "Возраст 61–74 года", auto: {type: age, min: 61, max: 74}}
+  - {key: arthroscopic_surgery, points: 2, label_ru: "Артроскопическая операция"}
+  - {key: major_open_surgery, points: 2, label_ru: "Большая открытая операция (более 45 минут)"}
+  - {key: laparoscopic_surgery, points: 2, label_ru: "Лапароскопическая операция (более 45 минут)"}
+  - {key: malignancy, points: 2, label_ru: "Злокачественное новообразование"}
+  - {key: bed_over_72h, points: 2, label_ru: "Постельный режим более 72 часов"}
+  - {key: plaster_cast, points: 2, label_ru: "Иммобилизирующая гипсовая повязка"}
+  - {key: central_venous_access, points: 2, label_ru: "Центральный венозный доступ"}
+  # 3 points
+  - {key: age_75_plus, points: 3, label_ru: "Возраст 75 лет и старше", auto: {type: age, min: 75, max: null}}
+  - {key: vte_history, points: 3, label_ru: "Венозная тромбоэмболия в анамнезе"}
+  - {key: vte_family_history, points: 3, label_ru: "Венозная тромбоэмболия в семейном анамнезе"}
+  - {key: factor_v_leiden, points: 3, label_ru: "Фактор V Лейден"}
+  - {key: prothrombin_20210a, points: 3, label_ru: "Мутация протромбина 20210A"}
+  - {key: lupus_anticoagulant, points: 3, label_ru: "Волчаночный антикоагулянт"}
+  - {key: anticardiolipin_antibodies, points: 3, label_ru: "Антикардиолипиновые антитела"}
+  - {key: homocysteine_elevated, points: 3, label_ru: "Повышенный уровень гомоцистеина в сыворотке"}
+  - {key: hit, points: 3, label_ru: "Гепарин-индуцированная тромбоцитопения"}
+  - {key: other_thrombophilia, points: 3, label_ru: "Другая врождённая или приобретённая тромбофилия"}
+  # 5 points
+  - {key: stroke_1m, points: 5, label_ru: "Инсульт (менее 1 месяца)"}
+  - {key: elective_major_arthroplasty, points: 5, label_ru: "Плановое большое эндопротезирование сустава нижней конечности"}
+  - {key: hip_pelvis_leg_fracture, points: 5, label_ru: "Перелом бедра, таза или голени"}
+  - {key: acute_spinal_cord_injury_1m, points: 5, label_ru: "Острая травма спинного мозга (менее 1 месяца)"}
+risk_categories:
+  - {key: very_low, label_ru: "Очень низкий", min: 0, max: 0}
+  - {key: low, label_ru: "Низкий", min: 1, max: 2}
+  - {key: moderate, label_ru: "Умеренный", min: 3, max: 4}
+  - {key: high, label_ru: "Высокий", min: 5, max: null}

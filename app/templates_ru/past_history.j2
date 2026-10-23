@@ -1,0 +1,2 @@
+{%- if data.past.denies %}Перенесённые операции и заболевания отрицает.
+{%- elif facts.past_items %}{{ facts.past_items | join('; ') }}.{% endif -%}
