@@ -15,7 +15,7 @@ services:
     plan: starter
     healthCheckPath: /api/health
     preDeployCommand: alembic upgrade head
-    dockerCommand: sh -c "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    # No dockerCommand: the Dockerfile CMD starts uvicorn on $PORT (Render does not shell-parse this field).
     envVars:
       - key: ENV
         value: production

@@ -29,3 +29,5 @@
 - Render rejected the 4-resource Blueprint (workspace limit of 25 resources). Cron jobs moved to
   `render-cron.yaml`; `render.yaml` has the web service and database only.
 - Unverified: whether a second Blueprint may reference `orthoready-db` through `fromDatabase`.
+- Render does not shell-parse `dockerCommand`: `sh -c "uvicorn ..."` was run as one executable name
+  (exit 127). The web service now relies on the Dockerfile `CMD`, which reads `$PORT`.
