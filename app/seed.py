@@ -197,3 +197,59 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def seed_extra_cases(session: Session, config: AppConfig, count: int) -> int:
+    """Adds `count` synthetic active cases (with rooms and beds) for load and performance checks."""
+    ward = session.scalars(select(Ward)).first()
+    doctors = list(session.scalars(select(User).where(User.role == Role.DOCTOR.value)))
+    if ward is None or not doctors:
+        raise RuntimeError("seed the demo data first")
+    first_room = session.scalar(select(func.count()).select_from(Room)) or 0
+    beds: list[Bed] = []
+    for n in range((count + 2) // 3):
+        room = Room(
+            ward_id=ward.id,
+            name=f"Пал. {first_room + n + 1}",
+            floor=3,
+            position_x=n * 100,
+            position_y=100,
+        )
+        session.add(room)
+        session.flush()
+        for b in range(1, 4):
+            bed = Bed(room_id=room.id, label=f"к. {b}")
+            session.add(bed)
+            beds.append(bed)
+    session.flush()
+    keys = [d.key for d in config.checklist.items]
+    rng = random.Random(7)  # noqa: S311 - deterministic load data, not security
+    today = local_today()
+    for i in range(count):
+        status, plan = CASE_PLAN[i % len(CASE_PLAN)]
+        patient = Patient(
+            full_name=f"{SURNAMES[i % 6]} {NAMES[(i + 1) % 6]} {PATRONYMICS[(i + 3) % 6]}",
+            birth_date=date(1950 + i % 40, 1 + i % 12, 1 + i % 27),
+            sex="F" if i % 2 else "M",
+            medical_record_number=f"LOAD-{i + 1:04d}",
+        )
+        session.add(patient)
+        session.flush()
+        case = Case(
+            patient_id=patient.id,
+            bed_id=beds[i].id,
+            treating_doctor_id=doctors[i % len(doctors)].id,
+            procedure_key=PROCEDURES[i % len(PROCEDURES)],
+            planned_surgery_date=today + timedelta(days=1 + i % 5),
+            status=status.value,
+            operated_on=today - timedelta(days=1)
+            if status in (CaseStatus.IN_OR, CaseStatus.POST_OP)
+            else None,
+        )
+        session.add(case)
+        session.flush()
+        statuses = _statuses_for(plan, keys, rng)
+        for key in keys:
+            session.add(ChecklistItem(case_id=case.id, key=key, status=statuses[key].value))
+    session.flush()
+    return count

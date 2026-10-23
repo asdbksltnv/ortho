@@ -177,3 +177,40 @@
   workspace has room (see the earlier note about Render's resource limit).
 - **Browser tests** found a header overflow at 360 px and a long-label overflow in the orders panel;
   both fixed and the 360 px check now covers the case page.
+
+## Phase 4 (analytics and polish)
+- **KPIs** (head of department and head nurse only), over a period filtered by admission date
+  (default: last 90 days):
+  - *median admission → Ready*: `first_ready_at − admitted_at` over cases that ever became Ready
+    (`first_ready_at` is set the first time readiness holds and never cleared);
+  - *most frequent blocking items*: the items currently blocking each active (not discharged) case
+    admitted in the period, counted per item;
+  - *overrides*: every call to the OR made by the head with a reason, newest first (case label is
+    initials and bed only);
+  - *not Ready the evening before surgery*: among cases whose planned surgery date has arrived and
+    that proceeded to the OR (emergencies excluded), those that were never Ready or only became
+    Ready after 18:00 (Asia/Tashkent) on the previous day. This uses `first_ready_at`, so a case
+    that was Ready and later lost readiness is not counted; a readiness history table would be
+    needed for that.
+- **CSV export** contains aggregates only (period, counts, median, per-item blocking counts): no
+  patient, bed, initials, case id or override reason. Each export is written to the audit log
+  (`export`).
+- **QR label**: initials, room/bed, procedure, planned date and a QR code to `/case/<uuid>`; no full
+  name and no record number. The QR is drawn as an SVG path from the `qrcode` module matrix (no
+  injected HTML). Opening the link without a session goes to the login form and returns to the case
+  afterwards (`?next=`, same-site paths only).
+- **Audit viewer** (admin and head of department): filter by entity and action, shows who acted.
+- **Performance**: route-level code splitting (main chunk 109 KB gzip; each page 1-10 KB),
+  gzip for API and static files, immutable caching for fingerprinted assets, no-cache for the shell.
+  The board runs a constant number of SQL queries (tested with 6 vs 60 cases); 60 cases serialise to
+  well under 20 KB gzipped. Measured with Playwright on a Pixel 5 profile, CPU 4x slower and a
+  9 Mbps / 170 ms 4G profile: about 1.0 s cold and warm (budget 1.5 s). This is an emulation on a
+  development machine, not a real device.
+- **Accessibility**: axe-core (WCAG 2.0/2.1 A and AA, including colour contrast) runs on every
+  screen and dialog in the browser suite. It found two real issues (a button whose accessible name
+  did not contain its visible text, and an ARIA label on an SVG circle without a role), plus
+  list semantics on the document page; all fixed. Status is never colour-only (distinct shapes and
+  text labels, unit-tested). Automated checks cannot replace a screen-reader and keyboard review
+  with real users.
+- **Load data**: `seed_extra_cases()` adds synthetic cases (rooms, beds, checklists) for load and
+  performance checks; it is used by the tests and the performance project in `e2e/`.

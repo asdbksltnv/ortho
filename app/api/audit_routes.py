@@ -10,6 +10,7 @@ from app.api.deps import AuditReader, ConfigDep, SessionDep, UserDep
 from app.api.errors import ApiError, forbidden
 from app.domain.permissions import Perm, has_perm
 from app.models.case import AuditLog
+from app.models.user import User
 from app.schemas.api import (
     AuditOut,
     AuditPage,
@@ -56,8 +57,14 @@ def list_audit(
         )
     rows = list(session.scalars(stmt.limit(limit + 1)))
     page, more = rows[:limit], len(rows) > limit
+    names = {u.id: u.full_name for u in session.scalars(select(User))}
+    items = []
+    for row in page:
+        out = AuditOut.model_validate(row)
+        out.user_name = names.get(row.user_id) if row.user_id else None
+        items.append(out)
     return AuditPage(
-        items=[AuditOut.model_validate(r) for r in page],
+        items=items,
         next_cursor=_encode(page[-1]) if more and page else None,
     )
 

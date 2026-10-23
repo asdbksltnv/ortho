@@ -209,10 +209,7 @@ function FieldRow({
   return (
     <>
       {showSection && (
-        <li
-          role="presentation"
-          className="mt-3 text-xs font-bold uppercase tracking-wide text-teal-900"
-        >
+        <li className="mt-3 text-xs font-bold uppercase tracking-wide text-teal-900">
           {field.section}
         </li>
       )}

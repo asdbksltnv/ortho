@@ -17,6 +17,12 @@ async def security_headers(
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "no-referrer")
+    path = request.url.path
+    if path.startswith("/assets/"):
+        # Vite fingerprints these files, so they can be cached for a year.
+        response.headers.setdefault("Cache-Control", "public, max-age=31536000, immutable")
+    elif not path.startswith("/api/"):
+        response.headers.setdefault("Cache-Control", "no-cache")  # index.html, sw.js, manifest
     if not request.url.path.startswith(_DOC_PATHS):  # Swagger UI loads assets from a CDN
         response.headers.setdefault("Content-Security-Policy", CSP)
     return response

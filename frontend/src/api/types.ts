@@ -137,6 +137,7 @@ export interface AuditRow {
   id: string
   created_at: string
   user_id: string | null
+  user_name: string | null
   action: string
   entity: string
   entity_id: string | null
@@ -307,4 +308,16 @@ export interface TelegramLink {
   code: string
   expires_at: string
   command: string
+}
+
+export interface Kpi {
+  period_from: string
+  period_to: string
+  cases_total: number
+  ready_cases: number
+  median_hours_to_ready: number | null
+  blocking_items: { key: string; label: string; count: number }[]
+  overrides: { at: string; case_id: string; case_label: string; reason: string | null }[]
+  surgeries_checked: number
+  not_ready_eve: { case_id: string; case_label: string; planned: string }[]
 }

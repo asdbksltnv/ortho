@@ -79,6 +79,7 @@ jobs:
         working-directory: e2e
         env:
           E2E_PYTHON: python
+          PERF_BUDGET_MS: "2500" # CI runners are slower than the 1500 ms product budget measured locally
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

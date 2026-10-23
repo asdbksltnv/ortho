@@ -3,10 +3,11 @@ import { login } from './helpers'
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true })
 
+// `last` keeps this file independent of other specs that use the first matching case.
 async function openCase(page: import('@playwright/test').Page, status: string, notReady?: boolean) {
   await page.goto('/')
   const rows = page.locator('tbody tr', { hasText: status })
-  const row = notReady === undefined ? rows.first() : rows.filter({ hasText: notReady ? 'Не готов' : 'Готов' }).first()
+  const row = notReady === undefined ? rows.last() : rows.filter({ hasText: notReady ? 'Не готов' : 'Готов' }).last()
   await row.getByRole('link').first().click()
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 }

@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.gzip import GZipMiddleware
 
 from app import __version__
 from app.api import (
@@ -15,6 +16,7 @@ from app.api import (
     documents,
     health,
     intake,
+    kpi,
     meta,
     postop,
     telegram_routes,
@@ -62,6 +64,7 @@ def create_app() -> FastAPI:
         openapi_url=None if settings.is_production else "/openapi.json",
     )
     app.middleware("http")(security_headers)
+    app.add_middleware(GZipMiddleware, minimum_size=500)
     register_error_handlers(app)
     get_config()  # fail fast on invalid clinical configuration
 
@@ -77,6 +80,7 @@ def create_app() -> FastAPI:
         workflow,
         postop,
         telegram_routes,
+        kpi,
         audit_routes,
     ):
         app.include_router(module.router, prefix="/api/v1")

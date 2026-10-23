@@ -25,3 +25,4 @@ ConsentWriter = Annotated[CurrentUser, Depends(require_perm(Perm.CONSENT_WRITE))
 UsersAdmin = Annotated[CurrentUser, Depends(require_perm(Perm.USERS_MANAGE))]
 WardsAdmin = Annotated[CurrentUser, Depends(require_perm(Perm.WARDS_MANAGE))]
 AuditReader = Annotated[CurrentUser, Depends(require_perm(Perm.AUDIT_READ))]
+KpiReader = Annotated[CurrentUser, Depends(require_perm(Perm.KPI_READ))]

@@ -13,7 +13,7 @@ describe('TrendChart', () => {
   it('names the series in the title and lists values in an accessible label', () => {
     render(<TrendChart title="Температура, °C" unit="°C" points={points} />)
     expect(screen.getByText('Температура, °C')).toBeInTheDocument()
-    const img = screen.getByRole('img')
+    const img = screen.getAllByRole('img')[0]
     expect(img.getAttribute('aria-label')).toContain('1 — 37,2')
     expect(img.getAttribute('aria-label')).not.toContain('3 —') // missing values are skipped
   })
@@ -47,6 +47,6 @@ describe('TrendChart', () => {
 
   it('handles a single point and integer series', () => {
     render(<TrendChart title="Боль" unit="ВАШ" integer points={[{ day: 2, value: 4 }]} />)
-    expect(screen.getByRole('img').getAttribute('aria-label')).toContain('2 — 4')
+    expect(screen.getAllByRole('img')[0].getAttribute('aria-label')).toContain('2 — 4')
   })
 })

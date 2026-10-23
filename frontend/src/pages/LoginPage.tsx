@@ -16,16 +16,19 @@ export function LoginPage() {
   const { user, login } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const rawNext = params.get('next')
+  // Only same-site paths: never redirect to another origin after login.
+  const next = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : null
   const [error, setError] = useState<string | null>(null)
   const { register, handleSubmit, formState } = useForm<Form>({ resolver: zodResolver(schema) })
 
-  if (user) return <Navigate to={isClinical(user.role) ? '/' : '/admin/users'} replace />
+  if (user) return <Navigate to={next ?? (isClinical(user.role) ? '/' : '/admin/users')} replace />
 
   const onSubmit = handleSubmit(async (values) => {
     setError(null)
     try {
       const u = await login(values.login, values.password)
-      navigate(isClinical(u.role) ? '/' : '/admin/users', { replace: true })
+      navigate(next ?? (isClinical(u.role) ? '/' : '/admin/users'), { replace: true })
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unknown'))
     }

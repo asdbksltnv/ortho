@@ -127,6 +127,12 @@ export function CasePage() {
           {t('case.documents')}
         </Link>
         <Link
+          to={`/case/${c.id}/label`}
+          className="inline-flex min-h-11 items-center rounded border border-slate-400 px-4 text-sm font-medium"
+        >
+          {t('label.open')}
+        </Link>
+        <Link
           to={`/case/${c.id}/postop`}
           className="inline-flex min-h-11 items-center rounded border border-teal-800 px-4 text-sm font-medium text-teal-900"
         >
@@ -154,7 +160,6 @@ export function CasePage() {
                   type="button"
                   onClick={() => setEditingKey(item.key)}
                   className="inline-flex min-h-11 flex-1 items-center gap-3 text-left"
-                  aria-label={`${col?.label_ru ?? item.key}: ${t(`itemStatus.${item.status}`)}`}
                 >
                   <StatusIcon status={item.status} />
                   <span>

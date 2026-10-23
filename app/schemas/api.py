@@ -270,6 +270,7 @@ class AuditOut(ORMModel):
     id: uuid.UUID
     created_at: datetime
     user_id: uuid.UUID | None
+    user_name: str | None = None
     action: str
     entity: str
     entity_id: uuid.UUID | None
@@ -487,3 +488,35 @@ class TelegramLinkOut(BaseModel):
     code: str
     expires_at: datetime
     command: str
+
+
+# ---- KPI ----
+class BlockingItemOut(BaseModel):
+    key: str
+    label: str
+    count: int
+
+
+class OverrideOut(BaseModel):
+    at: datetime
+    case_id: uuid.UUID
+    case_label: str
+    reason: str | None
+
+
+class NotReadyEveOut(BaseModel):
+    case_id: uuid.UUID
+    case_label: str
+    planned: date
+
+
+class KpiOut(BaseModel):
+    period_from: date
+    period_to: date
+    cases_total: int
+    ready_cases: int
+    median_hours_to_ready: float | None
+    blocking_items: list[BlockingItemOut]
+    overrides: list[OverrideOut]
+    surgeries_checked: int
+    not_ready_eve: list[NotReadyEveOut]

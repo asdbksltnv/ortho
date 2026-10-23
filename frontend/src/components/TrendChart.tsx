@@ -184,6 +184,7 @@ export function TrendChart({
                   r="14"
                   fill="transparent"
                   tabIndex={0}
+                  role="img"
                   aria-label={`${t('postop.day')} ${p.day}: ${fmt(p.value)} ${unit}`}
                   onPointerEnter={() => setActive(i)}
                   onFocus={() => setActive(i)}

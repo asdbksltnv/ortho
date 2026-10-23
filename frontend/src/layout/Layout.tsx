@@ -56,6 +56,11 @@ export function Layout() {
                   </NavLink>
                 </>
               )}
+              {(user.role === 'head_of_department' || user.role === 'head_nurse') && (
+                <NavLink to="/kpi" className={link}>
+                  {t('nav.kpi')}
+                </NavLink>
+              )}
               {canReadAudit(user.role) && (
                 <NavLink to="/audit" className={link}>
                   {t('nav.audit')}
