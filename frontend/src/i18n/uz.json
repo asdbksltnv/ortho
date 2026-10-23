@@ -1,0 +1,6 @@
+{
+  "app": { "name": "OrthoReady", "tagline": "TODO(i18n): o'zbekcha tarjima keyinroq qo'shiladi" },
+  "demo": { "banner": "TODO(i18n)" },
+  "home": { "shellReady": "TODO(i18n)" },
+  "common": { "loading": "TODO(i18n)", "error": "TODO(i18n)" }
+}
