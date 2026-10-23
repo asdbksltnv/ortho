@@ -77,6 +77,9 @@ class RoomOut(ORMModel):
     floor: int
     position_x: int | None
     position_y: int | None
+    width: int | None = None
+    height: int | None = None
+    kind: str = "patient"
     beds: list[BedOut]
 
 
@@ -96,6 +99,9 @@ class RoomCreate(BaseModel):
     floor: int = 1
     position_x: int | None = None
     position_y: int | None = None
+    width: int | None = None
+    height: int | None = None
+    kind: Literal["patient", "service", "exit"] = "patient"
 
 
 class RoomUpdate(BaseModel):
@@ -103,6 +109,9 @@ class RoomUpdate(BaseModel):
     floor: int | None = None
     position_x: int | None = None
     position_y: int | None = None
+    width: int | None = None
+    height: int | None = None
+    kind: Literal["patient", "service", "exit"] | None = None
 
 
 class BedCreate(BaseModel):

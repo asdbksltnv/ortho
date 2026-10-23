@@ -114,6 +114,9 @@ export interface Room {
   floor: number
   position_x: number | null
   position_y: number | null
+  width?: number | null
+  height?: number | null
+  kind?: 'patient' | 'service' | 'exit'
   beds: Bed[]
 }
 export interface Ward {

@@ -236,3 +236,16 @@
 - **Not resolved by this switch**: the original requirement that real patient data live on a server
   in Uzbekistan (Render has no such region) and Render's free Postgres expiry (30 days, no backups).
   These are legal and operational decisions for the hospital; DEPLOY.md lists them.
+
+## Floor layout (10th floor)
+- `config/floor_plan.yaml` reproduces the 10th-floor evacuation plan (AKFA MEDLINE, 1 December 2025):
+  patient rooms 1001-1016 plus the staff room, two procedure rooms, dressing room, two storerooms,
+  two toilets, two lifts and two stair exits, with approximate coordinates (a test checks that no
+  rooms overlap). It is applied at every deploy (`python -m app.floorplan`, also run by
+  `app.predeploy`): rooms are matched by name, positions updated, beds only ever added.
+- **One bed per patient room is assumed** (the plan does not show beds). Change `beds:` in the file
+  or add beds under «Палаты и койки».
+- The board has a «План этажа» view: each patient room shows the bed occupants by initials with
+  ✔/✖ (shape and text, not colour alone), free beds as «свободно», and opens the case on click or
+  Enter. The demo seed now places its cases in these rooms. The old placeholder ward («Пал. 1-4»)
+  stays in existing databases; deactivate its beds if it is not needed.

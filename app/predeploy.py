@@ -5,6 +5,7 @@ from alembic.config import Config
 
 from app.bootstrap import ensure_first_admin, has_real_admin, retire_demo_data
 from app.db import get_session_factory
+from app.floorplan import apply_plan, load_plan
 from app.seed import apply_demo_password, print_credentials, seed_if_empty
 from app.settings import get_settings
 
@@ -12,6 +13,11 @@ from app.settings import get_settings
 def main() -> None:
     command.upgrade(Config("alembic.ini"), "head")
     settings = get_settings()
+    with get_session_factory()() as session:
+        _, rooms, beds = apply_plan(session, load_plan())
+        session.commit()
+    if rooms or beds:
+        print(f"predeploy: floor plan added {rooms} room(s) and {beds} bed(s)", flush=True)
     if settings.demo_mode:
         credentials = seed_if_empty()
         if credentials:

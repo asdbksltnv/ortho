@@ -23,6 +23,11 @@ class Room(Base, IdMixin, TimestampMixin):
     # Reserved for the future floor-plan view.
     position_x: Mapped[int | None] = mapped_column(Integer, nullable=True)
     position_y: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    width: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    height: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    kind: Mapped[str] = mapped_column(
+        String(16), default="patient", server_default="patient"
+    )  # patient | service | exit
 
     ward: Mapped[Ward] = relationship(back_populates="rooms")
     beds: Mapped[list["Bed"]] = relationship(back_populates="room", order_by="Bed.label")

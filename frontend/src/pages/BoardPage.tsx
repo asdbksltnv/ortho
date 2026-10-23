@@ -3,14 +3,24 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import type { Board, BoardRow } from '../api/types'
+import type { Board, BoardRow, Ward } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
 import { ChecklistEditor } from '../components/ChecklistEditor'
+import { FloorPlan } from '../components/FloorPlan'
 import { StatusIcon } from '../components/StatusIcon'
 import { formatDate, formatDateTime } from '../lib/format'
 import { canEditItem } from '../lib/permissions'
 
 const POLL_MS = 5000 // other users' changes appear within the 10 s target
+const VIEW_KEY = 'orthoready:board-view'
+
+function savedView(): 'table' | 'plan' {
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === 'plan' ? 'plan' : 'table'
+  } catch {
+    return 'table'
+  }
+}
 
 export function BoardPage() {
   const { t } = useTranslation()
@@ -20,6 +30,21 @@ export function BoardPage() {
   const [notReady, setNotReady] = useState(false)
   const [doctorId, setDoctorId] = useState('')
   const [editing, setEditing] = useState<{ row: BoardRow; key: string } | null>(null)
+  const [view, setViewState] = useState<'table' | 'plan'>(savedView)
+  const setView = (v: 'table' | 'plan') => {
+    setViewState(v)
+    try {
+      window.localStorage.setItem(VIEW_KEY, v)
+    } catch {
+      // remembering the view is a convenience only
+    }
+  }
+  const wards = useQuery({
+    queryKey: ['wards'],
+    queryFn: () => api.get<Ward[]>('/wards'),
+    enabled: view === 'plan',
+    staleTime: 60_000,
+  })
 
   const query = useQuery({
     queryKey: ['board', { mine, tomorrow, notReady, doctorId }],
@@ -73,7 +98,28 @@ export function BoardPage() {
         <p className="mt-6 text-slate-700">{t('board.empty')}</p>
       )}
 
-      {board && board.rows.length > 0 && (
+      <div role="radiogroup" aria-label={t('board.viewTable')} className="mt-3 flex gap-2">
+        {(['table', 'plan'] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            role="radio"
+            aria-checked={view === v}
+            onClick={() => setView(v)}
+            className={`min-h-11 rounded border px-4 text-sm ${
+              view === v
+                ? 'border-teal-800 bg-teal-700 font-semibold text-white'
+                : 'border-slate-400 bg-white'
+            }`}
+          >
+            {v === 'table' ? t('board.viewTable') : t('board.viewPlan')}
+          </button>
+        ))}
+      </div>
+
+      {view === 'plan' && board && wards.data && <FloorPlan wards={wards.data} rows={board.rows} />}
+
+      {view === 'table' && board && board.rows.length > 0 && (
         <div className="mt-3 overflow-x-auto rounded border border-slate-300 bg-white">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead className="bg-slate-100 text-left">

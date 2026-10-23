@@ -38,6 +38,7 @@ test('QR label: initials, bed and a QR code, no name or record number; scanning 
   await page.goto(`${href}/label`)
   const label = page.getByTestId('label')
   await expect(label.getByRole('img', { name: 'QR' })).toBeVisible()
+  await expect(label).toContainText(/[А-Я]\. [А-Я]\./) // wait for the data, not the loading text
   const text = (await label.textContent()) ?? ''
   expect(text).toMatch(/[А-Я]\. [А-Я]\./)
   expect(text).toMatch(/Пал\. \d+, к\. \d+/)

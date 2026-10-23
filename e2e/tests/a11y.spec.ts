@@ -113,3 +113,10 @@ test('checklist editor dialog', async ({ page }) => {
   await page.getByRole('dialog').waitFor()
   await audit(page, 'checklist editor')
 })
+
+test('board floor-plan view', async ({ page }) => {
+  await login(page, 'nurse1')
+  await page.getByRole('radio', { name: 'План этажа' }).click()
+  await page.locator('[data-room="Пал. 1001"]').waitFor()
+  await audit(page, 'floor plan')
+})

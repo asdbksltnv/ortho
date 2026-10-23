@@ -1,0 +1,40 @@
+# Floor layout of the ward, taken from the 10th-floor evacuation plan («10-QAVAT EVAKUATSIYA REJASI»,
+# AKFA MEDLINE, approved 1 December 2025). Coordinates are in plan units (x right, y down) on a
+# 1000 x 520 canvas and only approximate the drawing. Patient rooms get `beds`; service rooms have
+# none. Loaded idempotently at deploy (python -m app.floorplan); edit and redeploy to change it.
+# TODO: confirm the number of beds in each patient room (1 assumed).
+version: 1
+ward: "Отделение ортопедии и травматологии, 10 этаж"
+floor: 10
+canvas: {width: 1000, height: 520}
+rooms:
+  # patient rooms (bemor xonasi)
+  - {name: "Пал. 1001", kind: patient, beds: 1, x: 0, y: 60, w: 70, h: 65}
+  - {name: "Пал. 1002", kind: patient, beds: 1, x: 20, y: 130, w: 75, h: 65}
+  - {name: "Пал. 1003", kind: patient, beds: 1, x: 60, y: 205, w: 95, h: 75}
+  - {name: "Пал. 1004", kind: patient, beds: 1, x: 160, y: 215, w: 70, h: 95}
+  - {name: "Пал. 1005", kind: patient, beds: 1, x: 235, y: 235, w: 70, h: 95}
+  - {name: "Пал. 1006", kind: patient, beds: 1, x: 310, y: 255, w: 75, h: 100}
+  - {name: "Пал. 1007", kind: patient, beds: 1, x: 390, y: 280, w: 62, h: 100}
+  - {name: "Пал. 1008", kind: patient, beds: 1, x: 455, y: 280, w: 62, h: 100}
+  - {name: "Пал. 1009", kind: patient, beds: 1, x: 520, y: 280, w: 62, h: 100}
+  - {name: "Пал. 1010", kind: patient, beds: 1, x: 585, y: 280, w: 62, h: 100}
+  - {name: "Пал. 1011", kind: patient, beds: 1, x: 660, y: 295, w: 60, h: 100}
+  - {name: "Пал. 1012", kind: patient, beds: 1, x: 725, y: 315, w: 65, h: 100}
+  - {name: "Пал. 1013", kind: patient, beds: 1, x: 795, y: 345, w: 60, h: 105}
+  - {name: "Пал. 1014", kind: patient, beds: 1, x: 815, y: 455, w: 90, h: 60}
+  - {name: "Пал. 1015", kind: patient, beds: 1, x: 885, y: 215, w: 105, h: 95}
+  - {name: "Пал. 1016", kind: patient, beds: 1, x: 790, y: 170, w: 90, h: 85}
+  # service rooms (no beds)
+  - {name: "Ординаторская", kind: service, x: 650, y: 150, w: 65, h: 60}
+  - {name: "Процедурная 1", kind: service, x: 720, y: 160, w: 65, h: 60}
+  - {name: "Процедурная 2", kind: service, x: 325, y: 85, w: 55, h: 80}
+  - {name: "Перевязочная", kind: service, x: 260, y: 60, w: 60, h: 80}
+  - {name: "Склад", kind: service, x: 200, y: 40, w: 55, h: 60}
+  - {name: "Склад 2", kind: service, x: 795, y: 290, w: 50, h: 45}
+  - {name: "Санузел", kind: service, x: 390, y: 175, w: 35, h: 45}
+  - {name: "Санузел 2", kind: service, x: 650, y: 240, w: 35, h: 40}
+  - {name: "Лифт", kind: service, x: 430, y: 150, w: 50, h: 55}
+  - {name: "Лифт 2", kind: service, x: 590, y: 150, w: 50, h: 55}
+  - {name: "Выход (лестница)", kind: exit, x: 110, y: 0, w: 80, h: 85}
+  - {name: "Выход (лестница) 2", kind: exit, x: 910, y: 320, w: 80, h: 100}

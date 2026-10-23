@@ -65,22 +65,18 @@ def seed_users(session: Session) -> dict[str, str]:
 
 
 def seed_ward(session: Session) -> list[Bed]:
-    ward = Ward(name="Ортопедическое отделение (демо)")
-    session.add(ward)
-    session.flush()
-    beds: list[Bed] = []
-    for n in range(1, 5):
-        room = Room(
-            ward_id=ward.id, name=f"Пал. {n}", floor=2, position_x=(n - 1) * 100, position_y=0
+    """Demo beds come from the real floor layout (config/floor_plan.yaml)."""
+    from app.floorplan import apply_plan, load_plan
+
+    ward, _, _ = apply_plan(session, load_plan())
+    return list(
+        session.scalars(
+            select(Bed)
+            .join(Room, Room.id == Bed.room_id)
+            .where(Room.ward_id == ward.id, Room.kind == "patient")
+            .order_by(Room.name, Bed.label)
         )
-        session.add(room)
-        session.flush()
-        for b in range(1, 4):
-            bed = Bed(room_id=room.id, label=f"к. {b}")
-            session.add(bed)
-            beds.append(bed)
-    session.flush()
-    return beds
+    )
 
 
 def _statuses_for(plan: str, keys: list[str], rng: random.Random) -> dict[str, ItemStatus]:
