@@ -74,15 +74,61 @@ export function BoardPage() {
 
   return (
     <main className="mx-auto max-w-[1600px] px-3 py-4">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h1 className="text-xl font-bold">{t('board.title')}</h1>
-        {board && (
-          <p className="text-sm text-slate-600" data-testid="board-summary">
-            {board.rows.length} {t('board.summaryTotal')} ·{' '}
-            {board.rows.filter((r) => r.ready).length} {t('board.summaryReady')}
-          </p>
-        )}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('board.title')}</h1>
+          {board && (
+            <p className="mt-0.5 text-xs text-slate-600">
+              {t('board.updated')}: {formatDateTime(board.generated_at)}
+            </p>
+          )}
+        </div>
+        <div
+          role="radiogroup"
+          aria-label={t('board.viewTable')}
+          className="inline-flex rounded-xl bg-slate-200/70 p-1"
+        >
+          {(['table', 'plan'] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={view === v}
+              onClick={() => setView(v)}
+              className={`min-h-11 rounded-lg px-4 text-sm font-medium transition ${
+                view === v
+                  ? 'bg-white text-teal-900 shadow-sm'
+                  : 'text-slate-700 hover:text-slate-900'
+              }`}
+            >
+              {v === 'table' ? t('board.viewTable') : t('board.viewPlan')}
+            </button>
+          ))}
+        </div>
       </div>
+      {board && (
+        <div
+          className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3"
+          data-testid="board-summary"
+        >
+          <Stat value={board.rows.length} label={t('board.summaryTotal')} tone="slate" />
+          <Stat
+            value={board.rows.filter((r) => r.ready).length}
+            label={t('board.summaryReady')}
+            tone="green"
+          />
+          <Stat
+            value={board.rows.filter((r) => !r.ready).length}
+            label={t('board.summaryNotReady')}
+            tone="red"
+          />
+          <Stat
+            value={board.rows.filter((r) => r.is_emergency).length}
+            label={t('board.summaryEmergency')}
+            tone="amber"
+          />
+        </div>
+      )}
       <div
         className="-mx-3 mt-3 flex items-center gap-2 overflow-x-auto px-3 pb-1"
         role="group"
@@ -95,7 +141,7 @@ export function BoardPage() {
           aria-label={t('board.doctor')}
           value={doctorId}
           onChange={(e) => setDoctorId(e.target.value)}
-          className="min-h-11 shrink-0 rounded-full border border-slate-300 bg-white px-3 text-sm"
+          className="select-chevron min-h-11 shrink-0 rounded-full border border-slate-300 bg-white px-4 text-sm shadow-sm"
         >
           <option value="">{t('board.allDoctors')}</option>
           {doctors.map(([id, name]) => (
@@ -109,31 +155,10 @@ export function BoardPage() {
       {query.isError && !board && <p className="mt-4 text-red-700">{t('common.error')}</p>}
       {query.isLoading && <p className="mt-4">{t('common.loading')}</p>}
       {board && board.rows.length === 0 && (
-        <p className="mt-6 text-slate-700">{t('board.empty')}</p>
+        <p className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-700">
+          {t('board.empty')}
+        </p>
       )}
-
-      <div
-        role="radiogroup"
-        aria-label={t('board.viewTable')}
-        className="mt-3 inline-flex rounded-lg border border-slate-300 bg-white p-1"
-      >
-        {(['table', 'plan'] as const).map((v) => (
-          <button
-            key={v}
-            type="button"
-            role="radio"
-            aria-checked={view === v}
-            onClick={() => setView(v)}
-            className={`min-h-11 rounded border px-4 text-sm ${
-              view === v
-                ? 'border-teal-800 bg-teal-700 font-semibold text-white'
-                : 'border-slate-400 bg-white'
-            }`}
-          >
-            {v === 'table' ? t('board.viewTable') : t('board.viewPlan')}
-          </button>
-        ))}
-      </div>
 
       {view === 'plan' && board && wards.data && <FloorPlan wards={wards.data} rows={board.rows} />}
 
@@ -151,11 +176,11 @@ export function BoardPage() {
       )}
 
       {view === 'table' && !isPhone && board && board.rows.length > 0 && (
-        <div className="mt-3 overflow-x-auto rounded border border-slate-300 bg-white">
+        <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full min-w-[900px] border-collapse text-sm">
-            <thead className="bg-slate-100 text-left">
+            <thead className="bg-slate-50 text-left text-slate-700">
               <tr>
-                <th scope="col" className="sticky left-0 z-10 bg-slate-100 px-3 py-2">
+                <th scope="col" className="sticky left-0 z-10 bg-slate-50 px-3 py-3">
                   {t('board.patient')}
                 </th>
                 <th scope="col" className="px-2 py-2">
@@ -188,7 +213,7 @@ export function BoardPage() {
                   >
                     <tr
                       data-case-row
-                      className="border-t border-slate-200 odd:bg-white even:bg-slate-50/60"
+                      className="border-t border-slate-100 bg-white transition-colors hover:bg-teal-50/40"
                     >
                       <th
                         scope="row"
@@ -196,7 +221,7 @@ export function BoardPage() {
                       >
                         <Link
                           to={`/case/${row.case_id}`}
-                          className="font-semibold text-teal-800 underline"
+                          className="font-semibold text-teal-800 underline decoration-teal-300 underline-offset-2 hover:decoration-teal-700"
                         >
                           {row.initials}
                         </Link>
@@ -240,10 +265,12 @@ export function BoardPage() {
                       })}
                       <td className="px-2 py-2 text-center">
                         {row.ready ? (
-                          <span className="font-semibold text-green-800">✔ {t('board.ready')}</span>
+                          <span className="inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-900">
+                            ✔ {t('board.ready')}
+                          </span>
                         ) : (
                           <span
-                            className="text-xs text-red-800"
+                            className="inline-flex whitespace-nowrap rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-800 ring-1 ring-red-200"
                             title={`${t('board.missing')}: ${row.blocking
                               .map((k) => columns.find((c) => c.key === k)?.short_label_ru ?? k)
                               .join(', ')}`}
@@ -262,11 +289,6 @@ export function BoardPage() {
             </tbody>
           </table>
         </div>
-      )}
-      {board && (
-        <p className="mt-2 text-xs text-slate-600">
-          {t('board.updated')}: {formatDateTime(board.generated_at)}
-        </p>
       )}
 
       {editing && (
@@ -292,6 +314,34 @@ export function BoardPage() {
   )
 }
 
+const STAT_TONES = {
+  slate: 'bg-white text-slate-900 ring-slate-200',
+  green: 'bg-green-50 text-green-900 ring-green-200',
+  red: 'bg-red-50 text-red-900 ring-red-200',
+  amber: 'bg-amber-50 text-amber-950 ring-amber-200',
+} as const
+
+function Stat({
+  value,
+  label,
+  tone,
+}: {
+  value: number
+  label: string
+  tone: keyof typeof STAT_TONES
+}) {
+  return (
+    <p
+      className={`flex items-baseline gap-2 rounded-2xl px-3 py-2 shadow-sm ring-1 sm:block sm:px-4 sm:py-3 ${STAT_TONES[tone]}`}
+    >
+      <span className="text-xl font-bold tabular-nums leading-tight sm:block sm:text-2xl">
+        {value}
+      </span>
+      <span className="text-xs font-medium">{label}</span>
+    </p>
+  )
+}
+
 function RowGroup({
   showRoom,
   row,
@@ -307,11 +357,11 @@ function RowGroup({
   return (
     <>
       {showRoom && (
-        <tr className="bg-teal-50">
+        <tr className="border-t border-teal-100 bg-teal-50/70">
           <th
             colSpan={colSpan}
             scope="colgroup"
-            className="px-3 py-1 text-left text-xs font-bold text-teal-900"
+            className="px-3 py-1.5 text-left text-xs font-bold uppercase tracking-wide text-teal-900"
           >
             {row.room_name ?? t('board.noRoom')}
           </th>
@@ -333,13 +383,18 @@ function Toggle({
 }) {
   return (
     <label
-      className={`flex min-h-11 shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border px-4 text-sm ${
+      className={`flex min-h-11 shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border px-4 text-sm shadow-sm transition-colors ${
         checked
-          ? 'border-teal-700 bg-teal-50 font-semibold text-teal-900'
-          : 'border-slate-300 bg-white'
+          ? 'border-teal-700 bg-teal-700 font-semibold text-white'
+          : 'border-slate-300 bg-white hover:border-teal-600'
       }`}
     >
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <input
+        type="checkbox"
+        className="h-4 w-4 accent-white"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
       {label}
     </label>
   )
@@ -359,9 +414,12 @@ function PatientCard({
   const done = Math.max(0, applicable - row.blocking.length)
   const pct = applicable ? Math.round((done / applicable) * 100) : 100
   return (
-    <li data-case-row className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <li
+      data-case-row
+      className={`rounded-2xl border bg-white p-3 shadow-sm ${row.is_emergency ? 'border-red-200 ring-1 ring-red-100' : 'border-slate-200'}`}
+    >
       <div className="flex items-start gap-3">
-        <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+        <span className="rounded-lg bg-teal-50 px-2 py-1 text-xs font-semibold text-teal-900 ring-1 ring-teal-200">
           {(row.room_name ?? t('board.noRoom')).replace(/^Пал\.\s*/, '')}
           {row.bed_label ? ` · ${row.bed_label}` : ''}
         </span>

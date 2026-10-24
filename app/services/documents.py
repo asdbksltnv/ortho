@@ -115,6 +115,9 @@ def build_render_input(
             caprini_category=caprini.category_label_ru,
             studies=_studies(case, config),
             separator=settings.decimal_separator,
+            detail_questions=[
+                (q.key, q.label_ru) for q in config.locations.questions_for(data.complaints.segment)
+            ],
         )
     )
     payload = data.model_dump(mode="json")

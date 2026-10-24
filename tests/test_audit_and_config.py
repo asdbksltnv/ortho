@@ -119,6 +119,17 @@ def test_bad_note_path_and_order_type_fail_startup(config_copy: Path) -> None:
         load_config(config_copy)
 
 
+def test_location_questions_must_match_segments(config_copy: Path) -> None:
+    path = config_copy / "location_questions.yaml"
+    original = path.read_text()
+    path.write_text(original.replace("\n  knee:\n", "\n  kneee:\n", 1))
+    with pytest.raises(ValueError, match="unknown segments"):
+        load_config(config_copy)
+    path.write_text(original.replace("key: locking", "key: pain_character", 1))
+    with pytest.raises(ValueError, match="duplicate keys"):
+        load_config(config_copy)
+
+
 def test_real_config_loads_and_all_flags_are_unvalidated() -> None:
     config = load_config(CONFIG_DIR)
     assert len(config.checklist.items) == 11

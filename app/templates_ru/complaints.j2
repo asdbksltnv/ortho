@@ -1,3 +1,4 @@
 {%- if facts.complaint_items %}Жалобы на {{ facts.complaint_items | join(', ') }}.{% endif -%}
+{%- if facts.complaint_details %} {{ facts.complaint_details | join('. ') }}.{% endif -%}
 {%- if data.complaints.weight_bearing %} Нагрузка на конечность: {{ data.complaints.weight_bearing }}.{% endif -%}
 {%- if data.complaints.other %} {{ data.complaints.other }}{% endif -%}

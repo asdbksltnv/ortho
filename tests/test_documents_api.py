@@ -176,6 +176,39 @@ def test_intake_config_endpoint(api: Api, case_id: uuid.UUID) -> None:
     assert cfg["nutrition"]["bmi_threshold"] == 20.5
     assert len(cfg["caprini"]["factors"]) == 37
     assert cfg["columbia"]["always_ask"] == [1, 2, 7]
+    segments = {s["key"] for s in cfg["segments"]}
+    assert set(cfg["locations"]["locations"]) == segments  # every segment has its own questions
+    knee = cfg["locations"]["locations"]["knee"]
+    assert "Лахмана" in knee["tests"]
+    assert {"name_ru": "сгибание", "rom_normal": 135} in knee["movements"]
+    assert [q["key"] for q in cfg["locations"]["common"]][0] == "pain_character"
+    assert "mechanism_suggestions" in cfg["picklists"]
+
+
+def test_location_answers_go_into_t1_complaints_for_the_chosen_segment_only(
+    api: Api, case_id: uuid.UUID
+) -> None:
+    api.as_role(Role.DOCTOR)
+    data = tka_intake()
+    data["complaints"]["details"] = {
+        "pain_character": ["ноющая", "тупая"],
+        "locking": "редко",
+        "aggravating": [],
+        "night_pain": "постоянно",  # a shoulder question left over after switching to the knee
+    }
+    assert put_intake(api, case_id, data).status_code == 200
+    value = fields_by_key(api.post(f"/cases/{case_id}/documents/{T1}/generate").json())[
+        "complaints"
+    ]["value"]
+    assert "деформацию. Характер боли: ноющая, тупая. Блокады сустава: редко." in value
+    assert "Ночная боль" not in value and "Боль усиливается" not in value
+
+
+def test_location_answer_keys_are_validated(api: Api, case_id: uuid.UUID) -> None:
+    api.as_role(Role.DOCTOR)
+    data = tka_intake()
+    data["complaints"]["details"] = {"Bad Key!": "x"}
+    assert put_intake(api, case_id, data).status_code == 422
 
 
 # -------------------------------------------------------------- T1

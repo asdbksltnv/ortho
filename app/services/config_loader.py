@@ -20,6 +20,7 @@ from app.schemas.config import (
     DietsConfig,
     EmrTemplateConfig,
     LabsConfig,
+    LocationQuestionsConfig,
     NutritionConfig,
     OrderSetsConfig,
     ProcedureTemplate,
@@ -46,6 +47,7 @@ class AppConfig:
     nutrition: NutritionConfig
     diets: DietsConfig
     defaults: DefaultsConfig
+    locations: LocationQuestionsConfig
     alerts: AlertThresholdsConfig
     antibiotic: AntibioticConfig
     order_sets: OrderSetsConfig
@@ -64,6 +66,19 @@ class AppConfig:
 def _read[T: BaseModel](path: Path, model: type[T]) -> T:
     with path.open(encoding="utf-8") as fh:
         return model.model_validate(yaml.safe_load(fh))
+
+
+def _validate_locations(locations: LocationQuestionsConfig, segments: set[str]) -> None:
+    unknown = set(locations.locations) - segments
+    if unknown:
+        raise ValueError(f"location_questions.yaml: unknown segments {sorted(unknown)}")
+    for segment in locations.locations:
+        keys = [q.key for q in locations.questions_for(segment)]
+        duplicates = {k for k in keys if keys.count(k) > 1}
+        if duplicates:
+            raise ValueError(
+                f"location_questions.yaml: {segment}: duplicate keys {sorted(duplicates)}"
+            )
 
 
 def load_config(config_dir: Path) -> AppConfig:
@@ -95,6 +110,8 @@ def load_config(config_dir: Path) -> AppConfig:
     nutrition = _read(config_dir / "nutrition.yaml", NutritionConfig)
     diets = _read(config_dir / "diets.yaml", DietsConfig)
     defaults = _read(config_dir / "defaults_ru.yaml", DefaultsConfig)
+    locations = _read(config_dir / "location_questions.yaml", LocationQuestionsConfig)
+    _validate_locations(locations, {s.key for s in defaults.segments})
     alerts = _read(config_dir / "alert_thresholds.yaml", AlertThresholdsConfig)
     antibiotic = _read(config_dir / "antibiotic_protocol.yaml", AntibioticConfig)
     order_sets = _read(config_dir / "order_sets.yaml", OrderSetsConfig)
@@ -111,6 +128,7 @@ def load_config(config_dir: Path) -> AppConfig:
         ("nutrition.yaml", nutrition),
         ("diets.yaml", diets),
         ("defaults_ru.yaml", defaults),
+        ("location_questions.yaml", locations),
     ):
         track(config_dir / name, meta)
 
@@ -136,6 +154,7 @@ def load_config(config_dir: Path) -> AppConfig:
         nutrition=nutrition,
         diets=diets,
         defaults=defaults,
+        locations=locations,
         alerts=alerts,
         antibiotic=antibiotic,
         order_sets=order_sets,

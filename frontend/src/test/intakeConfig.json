@@ -34,7 +34,9 @@
     "social_needs": ["уход дома", "транспорт", "нет"],
     "psychological_needs": ["нет", "тревога перед операцией", "нужны разъяснения"],
     "discharge_needs": ["ходунки", "костыли", "реабилитация", "перевязки", "контрольный осмотр"],
-    "consults": ["Анестезиолог", "Терапевт"]
+    "consults": ["Анестезиолог", "Терапевт"],
+    "mechanism_suggestions": ["бытовая травма", "ДТП"],
+    "prior_treatment_suggestions": ["НПВС", "ЛФК"]
   },
   "segments": [
     {
@@ -501,5 +503,61 @@
   },
   "diets": [],
   "default_diet": null,
-  "core_labs": ["HBsAg (HBV)", "anti-HCV", "RW", "ВИЧ", "ОАК", "Группа крови и резус"]
+  "core_labs": ["HBsAg (HBV)", "anti-HCV", "RW", "ВИЧ", "ОАК", "Группа крови и резус"],
+  "locations": {
+    "common": [
+      {
+        "key": "pain_character",
+        "label_ru": "Характер боли",
+        "multi": true,
+        "options": ["ноющая", "тупая", "острая"]
+      }
+    ],
+    "locations": {
+      "knee": {
+        "questions": [
+          {
+            "key": "locking",
+            "label_ru": "Блокады сустава",
+            "multi": false,
+            "options": ["нет", "редко", "часто"]
+          },
+          {
+            "key": "irradiation",
+            "label_ru": "Иррадиация",
+            "multi": true,
+            "options": ["нет", "в голень", "в бедро"]
+          }
+        ],
+        "movements": [
+          {
+            "name_ru": "сгибание",
+            "rom_normal": 135
+          },
+          {
+            "name_ru": "разгибание",
+            "rom_normal": 0
+          }
+        ],
+        "tests": ["Лахмана", "Мак-Мюррея"]
+      },
+      "shoulder": {
+        "questions": [
+          {
+            "key": "night_pain",
+            "label_ru": "Ночная боль, лёжа на больном плече",
+            "multi": false,
+            "options": ["нет", "иногда"]
+          }
+        ],
+        "movements": [
+          {
+            "name_ru": "отведение",
+            "rom_normal": 180
+          }
+        ],
+        "tests": ["Нира"]
+      }
+    }
+  }
 }

@@ -45,6 +45,8 @@ export interface IntakeData {
     swelling: boolean
     weight_bearing: string | null
     other: string
+    /** Answers to the location-specific questions, keyed by question key. */
+    details: Record<string, string | string[]>
   }
   allergy: { has: boolean | null; description: string }
   past: {
@@ -114,6 +116,22 @@ export interface IntakeData {
   }
 }
 
+export interface LocationQuestion {
+  key: string
+  label_ru: string
+  multi: boolean
+  options: string[]
+}
+export interface LocationSpec {
+  questions: LocationQuestion[]
+  movements: { name_ru: string; rom_normal: number | null }[]
+  tests: string[]
+}
+export interface LocationsConfig {
+  common: LocationQuestion[]
+  locations: Record<string, LocationSpec>
+}
+
 export interface IntakeResponse {
   data: IntakeData
   schema_version: number
@@ -126,6 +144,8 @@ export interface IntakeResponse {
 export interface IntakeConfig {
   picklists: Record<string, string[]>
   segments: { key: string; name_ru: string; gen_ru: string }[]
+  /** Optional so a config cached offline by an older build still loads. */
+  locations?: LocationsConfig
   systems: Record<string, { label_ru: string; normal_ru: string | null }>
   psycho: Record<string, { label_ru: string; default_ru: string }>
   caprini: {
@@ -184,6 +204,7 @@ export function emptyIntake(): IntakeData {
       swelling: false,
       weight_bearing: null,
       other: '',
+      details: {},
     },
     allergy: { has: null, description: '' },
     past: { denies: false, items: [], epidemiological: [], epidemiological_other: '' },
@@ -258,4 +279,14 @@ export function emptyIntake(): IntakeData {
       failed_conservative: '',
     },
   }
+}
+
+/** Common questions first, then the ones for the segment; none until a segment is chosen. */
+export function questionsFor(config: IntakeConfig, segment: string | null): LocationQuestion[] {
+  if (!segment || !config.locations) return []
+  return [...config.locations.common, ...(config.locations.locations[segment]?.questions ?? [])]
+}
+
+export function locationSpec(config: IntakeConfig, segment: string | null): LocationSpec | null {
+  return (segment && config.locations?.locations[segment]) || null
 }

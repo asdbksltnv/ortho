@@ -1,0 +1,303 @@
+# Location-specific complaint questions, range-of-motion movements and stability tests.
+# Keys under `locations` match `segments` in defaults_ru.yaml. Answers are stored as the Russian
+# option labels in complaints.details and appear in the complaints sentence of T1 as
+# "<label_ru>: <answers>." in the order listed here (common questions first).
+# `multi: true` allows several answers. `rom_normal` is a reference value (AAOS) shown as a hint.
+# TODO(clinical): all wording, options, movements, reference values and test lists are input
+# vocabulary only and must be confirmed by the department.
+version: 1
+requires_clinical_validation: true
+
+common:                          # asked for every location
+  - key: pain_character
+    label_ru: "Характер боли"
+    multi: true
+    options: ["ноющая", "тупая", "острая", "жгучая", "стреляющая", "пульсирующая"]
+  - key: pain_timing
+    label_ru: "Боль возникает"
+    multi: true
+    options: ["при нагрузке", "при ходьбе", "в покое", "ночью", "при смене погоды", "постоянно"]
+  - key: analgesics
+    label_ru: "Приём обезболивающих"
+    options: ["не принимает", "эпизодически", "ежедневно", "без эффекта"]
+
+shared:                          # reusable blocks (YAML anchors); not read by the app directly
+  - &walking_distance
+    key: walking_distance
+    label_ru: "Дистанция ходьбы без боли"
+    options: ["не ограничена", "более 1 км", "500 м – 1 км", "100–500 м", "менее 100 м", "в пределах квартиры"]
+  - &walking_aid
+    key: walking_aid
+    label_ru: "Средства опоры"
+    options: ["не использует", "трость", "костыли", "ходунки", "кресло-коляска"]
+  - &morning_stiffness
+    key: morning_stiffness
+    label_ru: "Утренняя скованность"
+    options: ["нет", "до 30 минут", "более 30 минут"]
+  - &dominant_hand
+    key: dominant_hand
+    label_ru: "Ведущая рука"
+    options: ["правша", "левша", "амбидекстр"]
+  - &numbness_hand
+    key: numbness
+    label_ru: "Онемение пальцев"
+    multi: true
+    options: ["нет", "I–III пальцы", "IV–V пальцы", "ночью", "все пальцы"]
+  - &grip_weakness
+    key: grip_weakness
+    label_ru: "Слабость хвата"
+    options: ["нет", "умеренная", "выраженная"]
+  - &trauma_circumstances
+    key: trauma_circumstances
+    label_ru: "Обстоятельства травмы"
+    options: ["бытовая", "уличная", "дорожно-транспортная", "спортивная", "производственная", "падение с высоты", "без травмы"]
+  - &abnormal_mobility
+    key: abnormal_mobility
+    label_ru: "Патологическая подвижность"
+    options: ["нет", "есть"]
+  - &bone_crepitus
+    key: bone_crepitus
+    label_ru: "Крепитация костных отломков"
+    options: ["нет", "есть"]
+  - &wound
+    key: wound
+    label_ru: "Рана в области повреждения"
+    options: ["нет", "ссадина", "рана (открытое повреждение)"]
+  - &distal_numbness
+    key: distal_numbness
+    label_ru: "Онемение дистальнее повреждения"
+    options: ["нет", "есть"]
+  - &immobilization
+    key: immobilization
+    label_ru: "Иммобилизация при поступлении"
+    options: ["нет", "гипсовая лонгета", "шина / ортез", "скелетное вытяжение"]
+
+locations:
+  knee:
+    questions:
+      - key: pain_site
+        label_ru: "Локализация боли"
+        multi: true
+        options: ["передняя поверхность (надколенник)", "медиальная поверхность", "латеральная поверхность", "подколенная область", "диффузная"]
+      - key: irradiation
+        label_ru: "Иррадиация"
+        multi: true
+        options: ["нет", "в голень", "в бедро"]
+      - key: aggravating
+        label_ru: "Боль усиливается"
+        multi: true
+        options: ["при подъёме по лестнице", "при спуске по лестнице", "при вставании со стула", "при приседании", "при длительной ходьбе"]
+      - key: locking
+        label_ru: "Блокады сустава"
+        options: ["нет", "редко", "часто"]
+      - key: instability
+        label_ru: "Ощущение нестабильности («подкашивание»)"
+        options: ["нет", "иногда", "часто"]
+      - key: crepitus
+        label_ru: "Хруст при движениях"
+        options: ["нет", "есть"]
+      - *morning_stiffness
+      - *walking_distance
+      - *walking_aid
+    movements:
+      - {name_ru: "сгибание", rom_normal: 135}
+      - {name_ru: "разгибание", rom_normal: 0}
+    tests: ["Лахмана", "передний выдвижной ящик", "задний выдвижной ящик", "вальгусный стресс-тест", "варусный стресс-тест", "Мак-Мюррея", "баллотирование надколенника"]
+
+  hip:
+    questions:
+      - key: pain_site
+        label_ru: "Локализация боли"
+        multi: true
+        options: ["паховая область", "ягодичная область", "область большого вертела", "передняя поверхность бедра"]
+      - key: irradiation
+        label_ru: "Иррадиация"
+        multi: true
+        options: ["нет", "в коленный сустав", "по передней поверхности бедра", "в поясницу"]
+      - key: aggravating
+        label_ru: "Боль усиливается"
+        multi: true
+        options: ["при ходьбе", "при вставании из положения сидя", "при длительном сидении", "лёжа на больном боку", "при подъёме по лестнице"]
+      - key: daily_difficulty
+        label_ru: "Затруднено в быту"
+        multi: true
+        options: ["надевание обуви и носков", "посадка в автомобиль", "подъём по лестнице", "гигиенические процедуры"]
+      - key: limp
+        label_ru: "Хромота"
+        options: ["нет", "незначительная", "выраженная"]
+      - *morning_stiffness
+      - *walking_distance
+      - *walking_aid
+    movements:
+      - {name_ru: "сгибание", rom_normal: 120}
+      - {name_ru: "разгибание", rom_normal: 30}
+      - {name_ru: "отведение", rom_normal: 45}
+      - {name_ru: "приведение", rom_normal: 30}
+      - {name_ru: "наружная ротация", rom_normal: 45}
+      - {name_ru: "внутренняя ротация", rom_normal: 45}
+    tests: ["Тренделенбурга", "FABER (Патрика)", "FADIR", "Томаса", "симптом «прилипшей пятки»", "осевая нагрузка"]
+
+  ankle:
+    questions:
+      - key: pain_site
+        label_ru: "Локализация боли"
+        multi: true
+        options: ["латеральная лодыжка", "медиальная лодыжка", "передняя поверхность сустава", "область ахиллова сухожилия", "диффузная"]
+      - key: aggravating
+        label_ru: "Боль усиливается"
+        multi: true
+        options: ["при ходьбе по неровной поверхности", "при длительной ходьбе", "при подъёме на носки", "при первых шагах после покоя"]
+      - key: instability
+        label_ru: "Подворачивание стопы"
+        options: ["нет", "редко", "часто"]
+      - key: evening_swelling
+        label_ru: "Отёк к вечеру"
+        options: ["нет", "есть"]
+      - *walking_distance
+      - *walking_aid
+    movements:
+      - {name_ru: "тыльное сгибание", rom_normal: 20}
+      - {name_ru: "подошвенное сгибание", rom_normal: 50}
+      - {name_ru: "инверсия", rom_normal: 35}
+      - {name_ru: "эверсия", rom_normal: 15}
+    tests: ["передний выдвижной ящик", "наклон таранной кости", "Томпсона", "тест сдавления голени"]
+
+  shoulder:
+    questions:
+      - key: pain_site
+        label_ru: "Локализация боли"
+        multi: true
+        options: ["передняя поверхность", "дельтовидная область", "задняя поверхность", "акромиально-ключичное сочленение"]
+      - key: irradiation
+        label_ru: "Иррадиация"
+        multi: true
+        options: ["нет", "по плечу до локтя", "в шею", "в лопатку"]
+      - key: night_pain
+        label_ru: "Ночная боль, лёжа на больном плече"
+        options: ["нет", "иногда", "постоянно"]
+      - key: difficulty
+        label_ru: "Затруднено"
+        multi: true
+        options: ["поднять руку над головой", "завести руку за спину", "завести руку за голову", "носить тяжести", "одеваться"]
+      - key: instability
+        label_ru: "Эпизоды вывиха / нестабильности"
+        options: ["нет", "однократно", "повторные"]
+      - key: weakness
+        label_ru: "Слабость в руке"
+        options: ["нет", "есть"]
+      - key: clicking
+        label_ru: "Щелчки / хруст"
+        options: ["нет", "есть"]
+      - *dominant_hand
+    movements:
+      - {name_ru: "сгибание", rom_normal: 180}
+      - {name_ru: "разгибание", rom_normal: 60}
+      - {name_ru: "отведение", rom_normal: 180}
+      - {name_ru: "наружная ротация", rom_normal: 90}
+      - {name_ru: "внутренняя ротация", rom_normal: 70}
+    tests: ["Нира", "Хокинса–Кеннеди", "Джобе («пустой банки»)", "«падающей руки»", "Спида", "О'Брайена", "тест опасения (apprehension)"]
+
+  elbow:
+    questions:
+      - key: pain_site
+        label_ru: "Локализация боли"
+        multi: true
+        options: ["латеральный надмыщелок", "медиальный надмыщелок", "задняя поверхность (локтевой отросток)", "передняя поверхность"]
+      - key: aggravating
+        label_ru: "Боль усиливается"
+        multi: true
+        options: ["при захвате предметов", "при разгибании кисти с сопротивлением", "при сгибании", "при опоре на локоть"]
+      - key: locking
+        label_ru: "Блокады сустава"
+        options: ["нет", "редко", "часто"]
+      - *numbness_hand
+      - *dominant_hand
+    movements:
+      - {name_ru: "сгибание", rom_normal: 150}
+      - {name_ru: "разгибание", rom_normal: 0}
+      - {name_ru: "пронация", rom_normal: 80}
+      - {name_ru: "супинация", rom_normal: 80}
+    tests: ["Козена", "Миллса", "Тинеля (кубитальный канал)", "вальгусный стресс-тест", "варусный стресс-тест"]
+
+  wrist:
+    questions:
+      - key: pain_site
+        label_ru: "Локализация боли"
+        multi: true
+        options: ["лучевая сторона", "локтевая сторона", "тыльная поверхность", "ладонная поверхность"]
+      - key: aggravating
+        label_ru: "Боль усиливается"
+        multi: true
+        options: ["при опоре на кисть", "при захвате", "при вращении предплечья", "при письме / работе за компьютером"]
+      - *numbness_hand
+      - *grip_weakness
+      - key: clicking
+        label_ru: "Щелчки"
+        options: ["нет", "есть"]
+      - *dominant_hand
+    movements:
+      - {name_ru: "тыльное сгибание", rom_normal: 70}
+      - {name_ru: "ладонное сгибание", rom_normal: 80}
+      - {name_ru: "лучевая девиация", rom_normal: 20}
+      - {name_ru: "локтевая девиация", rom_normal: 30}
+    tests: ["Финкельштейна", "Фалена", "Тинеля", "Уотсона", "нагрузка на ТФХК"]
+
+  hand:
+    questions:
+      - key: pain_site
+        label_ru: "Локализация боли"
+        multi: true
+        options: ["I палец", "II–V пальцы", "пястная область", "межфаланговые суставы"]
+      - key: aggravating
+        label_ru: "Боль усиливается"
+        multi: true
+        options: ["при захвате", "при мелкой моторике", "при сгибании пальцев"]
+      - key: triggering
+        label_ru: "«Защёлкивание» пальцев"
+        options: ["нет", "есть"]
+      - *numbness_hand
+      - *grip_weakness
+      - *dominant_hand
+    movements:
+      - {name_ru: "сгибание в пястно-фаланговых суставах", rom_normal: 90}
+      - {name_ru: "сгибание в проксимальных межфаланговых суставах", rom_normal: 100}
+      - {name_ru: "сгибание в дистальных межфаланговых суставах", rom_normal: 90}
+    tests: ["Фалена", "Тинеля", "Финкельштейна", "Фромана"]
+
+  foot:
+    questions:
+      - key: pain_site
+        label_ru: "Локализация боли"
+        multi: true
+        options: ["пяточная область", "подошвенная поверхность", "I плюснефаланговый сустав", "передний отдел стопы", "тыльная поверхность"]
+      - key: aggravating
+        label_ru: "Боль усиливается"
+        multi: true
+        options: ["при первых шагах утром", "при длительной ходьбе", "в тесной обуви", "при длительном стоянии"]
+      - key: deformity_type
+        label_ru: "Деформация"
+        multi: true
+        options: ["нет", "вальгусная деформация I пальца", "молоткообразные пальцы", "плоскостопие", "полая стопа"]
+      - key: calluses
+        label_ru: "Натоптыши / мозоли"
+        options: ["нет", "есть"]
+      - key: footwear
+        label_ru: "Подбор обуви"
+        options: ["без затруднений", "затруднён", "только ортопедическая обувь"]
+      - *walking_distance
+      - *walking_aid
+    movements:
+      - {name_ru: "тыльное сгибание I пальца", rom_normal: 70}
+      - {name_ru: "подошвенное сгибание I пальца", rom_normal: 45}
+      - {name_ru: "инверсия", rom_normal: 35}
+      - {name_ru: "эверсия", rom_normal: 15}
+    tests: ["Малдера", "подъём на носки", "Томпсона"]
+
+  thigh:
+    questions: [*trauma_circumstances, *abnormal_mobility, *bone_crepitus, *wound, *distal_numbness, *immobilization]
+  shin:
+    questions: [*trauma_circumstances, *abnormal_mobility, *bone_crepitus, *wound, *distal_numbness, *immobilization]
+  arm:
+    questions: [*trauma_circumstances, *abnormal_mobility, *bone_crepitus, *wound, *distal_numbness, *immobilization]
+  forearm:
+    questions: [*trauma_circumstances, *abnormal_mobility, *bone_crepitus, *wound, *distal_numbness, *immobilization]

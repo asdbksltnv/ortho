@@ -163,6 +163,37 @@ class DefaultsConfig(ConfigMeta):
     picklists: dict[str, list[str]]
 
 
+class LocationQuestion(_Strict):
+    key: str = Field(pattern=r"^[a-z0-9_]{1,64}$")
+    label_ru: str
+    multi: bool = False
+    options: list[str] = Field(min_length=1)
+
+
+class LocationMovement(_Strict):
+    name_ru: str
+    rom_normal: int | None = None  # reference value in degrees, shown as a hint only
+
+
+class LocationSpec(_Strict):
+    questions: list[LocationQuestion] = Field(default_factory=list)
+    movements: list[LocationMovement] = Field(default_factory=list)
+    tests: list[str] = Field(default_factory=list)
+
+
+class LocationQuestionsConfig(ConfigMeta):
+    common: list[LocationQuestion]
+    shared: list[LocationQuestion] = Field(default_factory=list)  # YAML anchors only
+    locations: dict[str, LocationSpec]
+
+    def questions_for(self, segment: str | None) -> list[LocationQuestion]:
+        """Common questions first, then the ones for the segment (none without a segment)."""
+        if not segment:
+            return []
+        spec = self.locations.get(segment)
+        return [*self.common, *(spec.questions if spec else [])]
+
+
 _SOURCE = re.compile(
     r"^(form|generated|board|schedule|staff|skip|case|procedure|note|copy:[a-z0-9_]+\.[a-z0-9_]+)$"
 )

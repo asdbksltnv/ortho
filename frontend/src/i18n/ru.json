@@ -96,6 +96,8 @@
     "noPlan": "Расположение палат ещё не задано",
     "summaryTotal": "пациентов",
     "summaryReady": "готовы",
+    "summaryNotReady": "не готовы",
+    "summaryEmergency": "экстренно",
     "summaryTomorrow": "операция завтра",
     "progress": "готово",
     "filters": "Фильтры",

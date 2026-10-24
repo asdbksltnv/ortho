@@ -71,6 +71,7 @@ def intake_config(_: UserDep, config: ConfigDep) -> IntakeConfigOut:
     return IntakeConfigOut(
         picklists=config.defaults.picklists,
         segments=config.defaults.segments,
+        locations=config.locations,
         systems=config.defaults.systems,
         psycho=config.defaults.psycho,
         caprini=config.caprini,

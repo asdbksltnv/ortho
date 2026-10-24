@@ -15,6 +15,7 @@ SCHEMA_VERSION = 1
 Text = Annotated[str, StringConstraints(max_length=2000, strip_whitespace=True)]
 Short = Annotated[str, StringConstraints(max_length=200, strip_whitespace=True)]
 BP = Annotated[str, StringConstraints(pattern=r"^\d{2,3}/\d{2,3}$")]
+DetailKey = Annotated[str, StringConstraints(pattern=r"^[a-z0-9_]{1,64}$")]
 
 
 class _Model(BaseModel):
@@ -38,6 +39,8 @@ class Complaints(_Model):
     swelling: bool = False
     weight_bearing: Short | None = None
     other: Text = ""
+    # Answers to the location-specific questions (location_questions.yaml), keyed by question.
+    details: dict[DetailKey, Short | list[Short]] = Field(default_factory=dict, max_length=40)
 
 
 class Allergy(_Model):

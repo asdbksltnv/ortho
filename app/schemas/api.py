@@ -10,6 +10,7 @@ from app.domain.postop import PostOpData
 from app.schemas.config import (
     CapriniConfig,
     ColumbiaConfig,
+    LocationQuestionsConfig,
     NutritionConfig,
     PsychoDefault,
     Segment,
@@ -342,6 +343,7 @@ class IntakeOut(BaseModel):
 class IntakeConfigOut(BaseModel):
     picklists: dict[str, list[str]]
     segments: list[Segment]
+    locations: LocationQuestionsConfig
     systems: dict[str, SystemDefault]
     psycho: dict[str, PsychoDefault]
     caprini: CapriniConfig

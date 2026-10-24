@@ -26,6 +26,8 @@ class FactsInput:
     caprini_category: str | None
     studies: list[str] = field(default_factory=list)
     separator: str = ","
+    # (key, label) of the location questions for the complaint segment, in display order
+    detail_questions: list[tuple[str, str]] = field(default_factory=list)
 
 
 def _yes_no(value: bool | None) -> str:
@@ -49,6 +51,14 @@ def build_facts(fi: FactsInput) -> dict[str, Any]:
         complaint_items.append("деформацию")
     if d.complaints.swelling:
         complaint_items.append("отёк")
+
+    complaint_details: list[str] = []
+    for key, label in fi.detail_questions:
+        answer = d.complaints.details.get(key)
+        values = [answer] if isinstance(answer, str) else list(answer or [])
+        values = [v for v in values if v]
+        if values:
+            complaint_details.append(f"{label}: {', '.join(values)}")
 
     rom_items = [f"{r.movement} {r.degrees}°" for r in d.local_status.rom]
     stability_items = [f"{s.test} — {s.result}" for s in d.local_status.stability]
@@ -94,6 +104,7 @@ def build_facts(fi: FactsInput) -> dict[str, Any]:
         "operation_full": f"{fi.operation_name} {side_adv}".strip(),
         "operation": fi.operation_name,
         "complaint_items": complaint_items,
+        "complaint_details": complaint_details,
         "history_core": history_core,
         "onset_date_ru": format_date_ru(d.history.onset_date),
         "past_items": [f"{i.text} ({i.year} г.)" if i.year else i.text for i in d.past.items],

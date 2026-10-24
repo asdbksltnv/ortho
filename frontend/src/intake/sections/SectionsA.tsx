@@ -6,15 +6,19 @@ import {
   Chips,
   Field,
   Num,
+  PainScale,
+  QuickPicks,
   RemoveButton,
   Section,
   Segmented,
   Select,
+  SubSection,
   Text,
   TextArea,
   YesNo,
 } from '../widgets'
 import type { Ctx } from './ctx'
+import { LocationQuestions } from './LocationQuestions'
 
 export function SectionsA({ c }: { c: Ctx }) {
   const { t } = useTranslation('intake')
@@ -26,13 +30,20 @@ export function SectionsA({ c }: { c: Ctx }) {
 
   return (
     <>
-      <Section id="s1" number={1} title={sections('s1')}>
-        <p className="text-sm text-slate-700">
-          {f('procedure')}: <strong>{c.snapshot.procedure_label}</strong>
-          {c.snapshot.side
-            ? ` · ${f('side')}: ${{ left: 'левая', right: 'правая', both: 'обе' }[c.snapshot.side as 'left']}`
-            : ''}
-        </p>
+      <Section id="s1" number={1} title={sections('s1')} filled={c.filled.has(1)}>
+        <div className="flex flex-wrap gap-2 text-sm">
+          <span className="rounded-lg bg-teal-50 px-3 py-1.5 text-teal-950 ring-1 ring-teal-200">
+            {f('procedure')}: <strong>{c.snapshot.procedure_label}</strong>
+          </span>
+          {c.snapshot.side && (
+            <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-slate-800">
+              {f('side')}:{' '}
+              <strong>
+                {{ left: 'левая', right: 'правая', both: 'обе' }[c.snapshot.side as 'left']}
+              </strong>
+            </span>
+          )}
+        </div>
         <Field label={f('hospCount')}>
           <Num
             label={f('hospCount')}
@@ -44,38 +55,42 @@ export function SectionsA({ c }: { c: Ctx }) {
         </Field>
       </Section>
 
-      <Section id="s2" number={2} title={sections('s2')}>
-        <Field label={f('segment')}>
-          <Select
-            label={f('segment')}
-            value={data.complaints.segment}
-            onChange={(v) => update('complaints.segment', v)}
-            options={segmentOptions}
+      <Section id="s2" number={2} title={sections('s2')} filled={c.filled.has(2)}>
+        <div className="grid gap-5 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
+          <Field label={f('segment')}>
+            <Select
+              label={f('segment')}
+              value={data.complaints.segment}
+              onChange={(v) => update('complaints.segment', v)}
+              options={segmentOptions}
+            />
+          </Field>
+          <Field label={f('pain')}>
+            <PainScale
+              label={f('pain')}
+              value={data.complaints.pain_vas}
+              onChange={(v) => update('complaints.pain_vas', v)}
+            />
+          </Field>
+        </div>
+        <div className="flex flex-wrap gap-2" role="group" aria-label={f('symptoms')}>
+          <Check
+            label={f('limitation')}
+            checked={data.complaints.limitation}
+            onChange={(v) => update('complaints.limitation', v)}
           />
-        </Field>
-        <Field label={f('pain')}>
-          <Segmented
-            label={f('pain')}
-            options={Array.from({ length: 11 }, (_, i) => String(i))}
-            value={data.complaints.pain_vas === null ? null : String(data.complaints.pain_vas)}
-            onChange={(v) => update('complaints.pain_vas', v === null ? null : Number(v))}
+          <Check
+            label={f('deformity')}
+            checked={data.complaints.deformity}
+            onChange={(v) => update('complaints.deformity', v)}
           />
-        </Field>
-        <Check
-          label={f('limitation')}
-          checked={data.complaints.limitation}
-          onChange={(v) => update('complaints.limitation', v)}
-        />
-        <Check
-          label={f('deformity')}
-          checked={data.complaints.deformity}
-          onChange={(v) => update('complaints.deformity', v)}
-        />
-        <Check
-          label={f('swelling')}
-          checked={data.complaints.swelling}
-          onChange={(v) => update('complaints.swelling', v)}
-        />
+          <Check
+            label={f('swelling')}
+            checked={data.complaints.swelling}
+            onChange={(v) => update('complaints.swelling', v)}
+          />
+        </div>
+        <LocationQuestions c={c} />
         <Field label={f('weightBearing')}>
           <Segmented
             label={f('weightBearing')}
@@ -92,51 +107,75 @@ export function SectionsA({ c }: { c: Ctx }) {
             rows={2}
           />
         </Field>
-        <Field
-          label={f('onset')}
-          hint={data.history.onset_date ? formatDate(data.history.onset_date) : undefined}
-        >
-          <input
-            type="date"
-            aria-label={f('onset')}
-            value={data.history.onset_date ?? ''}
-            onChange={(e) => update('history.onset_date', e.target.value || null)}
-            className="min-h-11 w-full max-w-48 rounded border border-slate-400 px-3"
-          />
-        </Field>
-        <Field label={f('mechanism')}>
-          <Text
-            label={f('mechanism')}
-            value={data.history.mechanism}
-            onChange={(v) => update('history.mechanism', v)}
-          />
-        </Field>
-        <Field label={f('duration')}>
-          <Text
-            label={f('duration')}
-            value={data.history.duration}
-            onChange={(v) => update('history.duration', v)}
-          />
-        </Field>
-        <Field label={f('priorTreatment')}>
-          <TextArea
-            label={f('priorTreatment')}
-            value={data.history.prior_treatment}
-            onChange={(v) => update('history.prior_treatment', v)}
-            rows={2}
-          />
-        </Field>
-        <Field label={f('course')}>
-          <Segmented
-            label={f('course')}
-            options={pick.course ?? []}
-            value={data.history.course}
-            onChange={(v) => update('history.course', v)}
-          />
-        </Field>
+
+        <SubSection title={f('historyTitle')}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label={f('onset')}
+              hint={data.history.onset_date ? formatDate(data.history.onset_date) : undefined}
+            >
+              <input
+                type="date"
+                aria-label={f('onset')}
+                value={data.history.onset_date ?? ''}
+                onChange={(e) => update('history.onset_date', e.target.value || null)}
+                className="min-h-11 w-full max-w-56 rounded-lg border border-slate-300 bg-white px-3 shadow-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+              />
+            </Field>
+            <Field label={f('course')}>
+              <Segmented
+                label={f('course')}
+                options={pick.course ?? []}
+                value={data.history.course}
+                onChange={(v) => update('history.course', v)}
+              />
+            </Field>
+          </div>
+          <Field label={f('mechanism')}>
+            <Text
+              label={f('mechanism')}
+              value={data.history.mechanism}
+              onChange={(v) => update('history.mechanism', v)}
+            />
+            <QuickPicks
+              label={f('mechanism')}
+              options={pick.mechanism_suggestions ?? []}
+              value={data.history.mechanism}
+              onChange={(v) => update('history.mechanism', v)}
+            />
+          </Field>
+          <Field label={f('duration')}>
+            <Text
+              label={f('duration')}
+              value={data.history.duration}
+              onChange={(v) => update('history.duration', v)}
+            />
+            <QuickPicks
+              label={f('duration')}
+              options={pick.duration_suggestions ?? []}
+              value={data.history.duration}
+              onChange={(v) => update('history.duration', v)}
+            />
+          </Field>
+          <Field label={f('priorTreatment')}>
+            <TextArea
+              label={f('priorTreatment')}
+              value={data.history.prior_treatment}
+              onChange={(v) => update('history.prior_treatment', v)}
+              rows={2}
+            />
+            <QuickPicks
+              append
+              label={f('priorTreatment')}
+              options={pick.prior_treatment_suggestions ?? []}
+              value={data.history.prior_treatment}
+              onChange={(v) => update('history.prior_treatment', v)}
+            />
+          </Field>
+        </SubSection>
       </Section>
 
-      <Section id="s3" number={3} title={sections('s3')}>
+      <Section id="s3" number={3} title={sections('s3')} filled={c.filled.has(3)}>
         <Field label={f('hasAllergy')}>
           <YesNo
             label={f('hasAllergy')}
@@ -156,7 +195,7 @@ export function SectionsA({ c }: { c: Ctx }) {
         )}
       </Section>
 
-      <Section id="s4" number={4} title={sections('s4')}>
+      <Section id="s4" number={4} title={sections('s4')} filled={c.filled.has(4)}>
         <Check
           label={f('denies')}
           checked={data.past.denies}
@@ -215,7 +254,7 @@ export function SectionsA({ c }: { c: Ctx }) {
         </Field>
       </Section>
 
-      <Section id="s5" number={5} title={sections('s5')}>
+      <Section id="s5" number={5} title={sections('s5')} filled={c.filled.has(5)}>
         <Check
           label={f('noMeds')}
           checked={data.medications_none}
@@ -282,7 +321,7 @@ export function SectionsA({ c }: { c: Ctx }) {
         )}
       </Section>
 
-      <Section id="s6" number={6} title={sections('s6')}>
+      <Section id="s6" number={6} title={sections('s6')} filled={c.filled.has(6)}>
         <Field label={f('alcohol')}>
           <Segmented
             label={f('alcohol')}

@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import config from '../test/intakeConfig.json'
 import { mockApi } from '../test/utils'
-import { emptyIntake } from '../intake/types'
+import { emptyIntake, type IntakeData } from '../intake/types'
 import { IntakePage } from './IntakePage'
 
 afterEach(() => vi.unstubAllGlobals())
@@ -175,5 +175,86 @@ describe('IntakePage', () => {
   it('notes that the draft holds no identifiers', async () => {
     renderIntake()
     expect(await screen.findByText(/без ФИО и номера истории болезни/)).toBeInTheDocument()
+  })
+
+  it('asks location-specific questions with dropdowns once the area is chosen', async () => {
+    const { put } = renderIntake()
+    expect(await screen.findByText(/Выберите область — появятся вопросы/)).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Блокады сустава' })).not.toBeInTheDocument()
+
+    const area = screen.getAllByRole('combobox', { name: 'Область' })[0]
+    fireEvent.change(area, { target: { value: 'knee' } })
+    expect(
+      screen.getByRole('heading', { name: /Вопросы по области: коленный сустав/ }),
+    ).toBeVisible()
+    expect(screen.queryByRole('combobox', { name: /Ночная боль/ })).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Блокады сустава' }), {
+      target: { value: 'редко' },
+    })
+    const character = screen.getByRole('button', { name: /^Характер боли:/ })
+    expect(character).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(character)
+    const panel = screen.getByRole('group', { name: 'Характер боли: варианты' })
+    fireEvent.click(within(panel).getByRole('checkbox', { name: 'ноющая' }))
+    fireEvent.click(within(panel).getByRole('checkbox', { name: 'тупая' }))
+    expect(character).toHaveTextContent('ноющая, тупая')
+    expect(character).toHaveAccessibleName('Характер боли: ноющая, тупая')
+    expect(screen.getByTestId('location-progress')).toHaveTextContent('2 / 3')
+
+    // «нет» excludes every other answer of a multi-choice question
+    fireEvent.click(screen.getByRole('button', { name: /^Иррадиация:/ }))
+    const irradiation = screen.getByRole('group', { name: 'Иррадиация: варианты' })
+    fireEvent.click(within(irradiation).getByRole('checkbox', { name: 'в голень' }))
+    fireEvent.click(within(irradiation).getByRole('checkbox', { name: 'нет' }))
+    expect(within(irradiation).getByRole('checkbox', { name: 'в голень' })).not.toBeChecked()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+    await waitFor(() => expect(put).toHaveBeenCalled())
+    const body = (put.mock.calls[0] as unknown as [{ body: { data: IntakeData } }])[0].body
+    expect(body.data.complaints.details).toEqual({
+      locking: 'редко',
+      pain_character: ['ноющая', 'тупая'],
+      irradiation: ['нет'],
+    })
+  })
+
+  it('fills history fields with one tap and suggests tests for the area', async () => {
+    renderIntake()
+    fireEvent.click(
+      within(await screen.findByRole('group', { name: 'Механизм: быстрый выбор' })).getByRole(
+        'button',
+        { name: /ДТП/ },
+      ),
+    )
+    expect(screen.getByRole('textbox', { name: 'Механизм' })).toHaveValue('ДТП')
+    const prior = screen.getByRole('group', { name: 'Предшествующее лечение: быстрый выбор' })
+    fireEvent.click(within(prior).getByRole('button', { name: /НПВС/ }))
+    fireEvent.click(within(prior).getByRole('button', { name: /ЛФК/ }))
+    expect(screen.getByRole('textbox', { name: 'Предшествующее лечение' })).toHaveValue('НПВС, ЛФК')
+
+    fireEvent.change(screen.getAllByRole('combobox', { name: 'Область' })[0], {
+      target: { value: 'knee' },
+    })
+    const tests = screen.getByRole('group', { name: 'Тесты для этой области' })
+    fireEvent.click(within(tests).getByRole('button', { name: '+ Лахмана' }))
+    expect(screen.getByRole('textbox', { name: 'Тест' })).toHaveValue('Лахмана')
+    expect(within(tests).queryByRole('button', { name: '+ Лахмана' })).not.toBeInTheDocument()
+
+    fireEvent.click(
+      within(screen.getByRole('group', { name: 'Быстро добавить движение' })).getByRole('button', {
+        name: '+ сгибание',
+      }),
+    )
+    expect(screen.getByText('Норма (справочно): 135°')).toBeInTheDocument()
+  })
+
+  it('marks sections that hold answers and shows overall progress', async () => {
+    renderIntake()
+    const bar = await screen.findByRole('progressbar', { name: 'Заполнено разделов' })
+    const before = Number(bar.getAttribute('aria-valuenow'))
+    fireEvent.click(radio('Есть аллергия?', 'Нет'))
+    expect(Number(bar.getAttribute('aria-valuenow'))).toBe(before + 1)
+    expect(screen.getByRole('link', { name: '3. Аллергия, заполнено' })).toBeInTheDocument()
   })
 })

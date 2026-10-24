@@ -13,4 +13,6 @@ export interface Ctx {
   nutrition: NutritionResult
   columbiaVisible: number[]
   columbiaAlert: boolean
+  /** Sections that already hold an answer (for the progress chips). */
+  filled: Set<number>
 }

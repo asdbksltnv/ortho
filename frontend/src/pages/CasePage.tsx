@@ -9,6 +9,7 @@ import { ChecklistEditor } from '../components/ChecklistEditor'
 import { OrdersPanel } from '../components/OrdersPanel'
 import { StatusPanel } from '../components/StatusPanel'
 import { StatusIcon } from '../components/StatusIcon'
+import { Icon } from '../components/Icon'
 import { useToast } from '../components/Toast'
 import { formatDate, formatDateTime } from '../lib/format'
 import { canEditItem, canWriteRecords } from '../lib/permissions'
@@ -83,15 +84,28 @@ export function CasePage() {
     (a, b) =>
       Number(c.readiness.blocking.includes(b.key)) - Number(c.readiness.blocking.includes(a.key)),
   )
-  const card = 'rounded-xl border border-slate-200 bg-white p-4 shadow-sm'
+  const card = 'rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5'
   const linkBtn =
-    'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg border px-4 text-sm font-medium'
+    'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border px-4 text-sm font-medium shadow-sm transition-colors'
 
   return (
     <main className="mx-auto max-w-6xl px-3 py-4">
       <header className={card}>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-xl font-bold md:text-2xl">{c.patient.full_name}</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            aria-hidden
+            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-teal-800 text-lg font-bold text-white shadow-sm"
+          >
+            {c.patient.full_name
+              .split(/\s+/)
+              .slice(0, 2)
+              .map((p) => p[0] ?? '')
+              .join('')
+              .toUpperCase()}
+          </span>
+          <h1 className="min-w-0 text-xl font-bold tracking-tight md:text-2xl">
+            {c.patient.full_name}
+          </h1>
           {c.is_emergency && (
             <span className="rounded bg-red-700 px-2 py-0.5 text-xs font-semibold text-white">
               {t('board.emergency')}
@@ -152,26 +166,30 @@ export function CasePage() {
       >
         <Link
           to={`/case/${c.id}/intake`}
-          className={`${linkBtn} border-teal-700 bg-teal-700 text-white`}
+          className={`${linkBtn} border-teal-700 bg-teal-700 text-white hover:bg-teal-800`}
         >
+          <Icon name="clipboard" size={18} />
           {t('case.intake')}
         </Link>
         <Link
           to={`/case/${c.id}/documents`}
-          className={`${linkBtn} border-teal-700 bg-white text-teal-900`}
+          className={`${linkBtn} border-teal-200 bg-white text-teal-900 hover:border-teal-600 hover:bg-teal-50`}
         >
+          <Icon name="docs" size={18} />
           {t('case.documents')}
         </Link>
         <Link
           to={`/case/${c.id}/postop`}
-          className={`${linkBtn} border-teal-700 bg-white text-teal-900`}
+          className={`${linkBtn} border-teal-200 bg-white text-teal-900 hover:border-teal-600 hover:bg-teal-50`}
         >
+          <Icon name="pulse" size={18} />
           {t('case.postop')}
         </Link>
         <Link
           to={`/case/${c.id}/label`}
-          className={`${linkBtn} border-slate-300 bg-white text-slate-800`}
+          className={`${linkBtn} border-slate-300 bg-white text-slate-800 hover:bg-slate-50`}
         >
+          <Icon name="qr" size={18} />
           {t('label.open')}
         </Link>
       </nav>
@@ -447,7 +465,7 @@ function AnaesthesiaForm({
           value={typeValue}
           maxLength={200}
           onChange={(e) => setType(e.target.value)}
-          className="min-h-11 rounded border border-slate-400 px-3"
+          className="min-h-11 rounded-lg border border-slate-300 px-3"
         />
       </label>
       <label className="mt-2 grid gap-1 text-sm font-medium">
@@ -457,13 +475,13 @@ function AnaesthesiaForm({
           maxLength={2000}
           rows={2}
           onChange={(e) => setRemarks(e.target.value)}
-          className="rounded border border-slate-400 p-2"
+          className="rounded-lg border border-slate-300 p-2"
         />
       </label>
       <button
         type="button"
         onClick={() => save.mutate()}
-        className="mt-2 min-h-11 rounded bg-teal-700 px-4 text-white"
+        className="mt-2 min-h-11 rounded-lg bg-teal-700 px-4 font-medium text-white hover:bg-teal-800"
       >
         {t('common.save')}
       </button>

@@ -70,7 +70,7 @@ export function SectionsC({ c }: { c: Ctx }) {
 
   return (
     <>
-      <Section id="s12" number={12} title={sections('s12')}>
+      <Section id="s12" number={12} title={sections('s12')} filled={c.filled.has(12)}>
         <h3 className="font-semibold">{f('columbia')}</h3>
         {c.columbiaAlert && (
           <div
@@ -117,7 +117,7 @@ export function SectionsC({ c }: { c: Ctx }) {
         </p>
       </Section>
 
-      <Section id="s13" number={13} title={sections('s13')}>
+      <Section id="s13" number={13} title={sections('s13')} filled={c.filled.has(13)}>
         {groups.map((points) => (
           <fieldset key={points} className="grid gap-1">
             <legend className="text-sm font-semibold text-slate-800">
@@ -164,7 +164,7 @@ export function SectionsC({ c }: { c: Ctx }) {
         </p>
       </Section>
 
-      <Section id="s14" number={14} title={sections('s14')}>
+      <Section id="s14" number={14} title={sections('s14')} filled={c.filled.has(14)}>
         {(
           [
             ['main', 'dxMain'],
@@ -232,7 +232,7 @@ export function SectionsC({ c }: { c: Ctx }) {
         </Field>
       </Section>
 
-      <Section id="s15" number={15} title={sections('s15')}>
+      <Section id="s15" number={15} title={sections('s15')} filled={c.filled.has(15)}>
         <Field label={f('diet')}>
           {config.diets.length > 0 ? (
             <Segmented
@@ -337,7 +337,7 @@ export function SectionsC({ c }: { c: Ctx }) {
         </Field>
       </Section>
 
-      <Section id="s16" number={16} title={sections('s16')}>
+      <Section id="s16" number={16} title={sections('s16')} filled={c.filled.has(16)}>
         <Field label={f('economicAbility')}>
           <Segmented
             label={f('economicAbility')}

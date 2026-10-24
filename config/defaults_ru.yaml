@@ -37,6 +37,10 @@ segments:                        # nominative and genitive forms for sentence ge
 
 picklists:
   course: ["острое", "прогрессирующее", "стабильное", "рецидивирующее"]
+  # quick picks under free-text history fields: a tap fills (or appends to) the text  TODO(clinical)
+  mechanism_suggestions: ["бытовая травма", "падение с высоты роста", "ДТП", "спортивная травма", "без травмы, постепенно", "после перенесённой операции"]
+  duration_suggestions: ["до 1 месяца", "1–6 месяцев", "6–12 месяцев", "1–3 года", "3–5 лет", "более 5 лет"]
+  prior_treatment_suggestions: ["НПВС", "физиотерапия", "ЛФК", "внутрисуставные инъекции", "ортезирование", "иммобилизация", "оперативное лечение"]
   weight_bearing: ["полная", "с дополнительной опорой", "невозможна"]       # TODO(clinical)
   alcohol: ["не употребляет", "эпизодически", "регулярно"]                  # TODO(clinical)
   tobacco: ["не курит", "курит", "бросил(а)"]                               # TODO(clinical)

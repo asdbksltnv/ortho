@@ -264,3 +264,23 @@
 - Intake: sticky chip navigation to the 16 sections replaces the dropdown.
 - Toast confirmations for checklist saves, status changes, case parameter edits, labs and consents.
 - Browser tests now find cases by `data-case-row`, so they work with both the table and the cards.
+
+## Location-specific intake questions and visual refresh
+- `config/location_questions.yaml` holds, per area (`segments` keys): complaint questions with
+  dropdown answers (single choice = native select, several answers = checkbox dropdown where «нет»
+  excludes the rest), plus range-of-motion movements with AAOS reference values (shown as a hint
+  only, never prefilled) and stability tests offered as one-tap rows in the local status. Three
+  common questions (character and timing of pain, analgesics) are asked for every area. Startup
+  fails if an area is unknown or a question key repeats.
+- **All wording, options, reference values and test lists are input vocabulary written by the
+  developer and need clinical confirmation** (`requires_clinical_validation: true`).
+- Answers are stored in `complaints.details` (key → text or list). T1 «Жалобы» appends them as
+  "<Вопрос>: <ответы>." for the current area only, so answers left over after changing the area
+  never reach the document. Older drafts without the field load unchanged.
+- Free-text history fields (mechanism, duration, prior treatment) get quick-pick chips from
+  `defaults_ru.yaml` picklists `*_suggestions`; prior treatment appends, the others replace.
+- Intake page: progress header, section badges and chips show which sections hold answers (a
+  section counts once any answer is given, not when complete), and the jump bar follows the scroll.
+- Visual refresh: SVG icon set instead of emoji, gradient header with logo and avatar, board stat
+  tiles and a segmented view switch, restyled login, one focus-visible style, reduced-motion
+  support. The axe WCAG 2.1 AA audit and the 360 px no-horizontal-scroll checks still pass.

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { PSYCHO_KEYS, SYSTEM_KEYS, type Vitals } from '../types'
+import { PSYCHO_KEYS, SYSTEM_KEYS, locationSpec, type Vitals } from '../types'
 import {
   AddButton,
   Chips,
@@ -13,6 +13,36 @@ import {
   TextArea,
 } from '../widgets'
 import type { Ctx } from './ctx'
+
+/** One tap adds a prefilled row for a suggestion that is not on the list yet. */
+function QuickAdd({
+  label,
+  options,
+  onPick,
+}: {
+  label: string
+  options: string[]
+  onPick: (option: string) => void
+}) {
+  if (options.length === 0) return null
+  return (
+    <div role="group" aria-label={label} className="grid gap-1.5">
+      <span className="text-xs font-medium text-slate-700">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onPick(option)}
+            className="min-h-9 rounded-full border border-dashed border-slate-400 bg-white px-3 text-xs text-slate-800 transition-colors hover:border-teal-600 hover:bg-teal-50"
+          >
+            + {option}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export function BloodPressure({
   value,
@@ -33,7 +63,7 @@ export function BloodPressure({
       maxLength={3}
       value={v ?? ''}
       onChange={(e) => set(e.target.value.replace(/\D/g, ''))}
-      className="min-h-11 w-20 rounded border border-slate-400 px-3 text-base"
+      className="min-h-11 w-20 rounded-lg border border-slate-300 bg-white px-3 text-base tabular-nums shadow-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
     />
   )
   return (
@@ -148,13 +178,19 @@ export function SectionsB({ c }: { c: Ctx }) {
   const f = (k: string) => t(`f.${k}`)
   const sections = (k: string) => t(`sections.${k}`)
   const segmentOptions = config.segments.map((s) => ({ value: s.key, label: s.name_ru }))
+  // Movements and tests follow the local-status area, or the complaint area when not set.
+  const localSegment = data.local_status.segment ?? data.complaints.segment
+  const spec = locationSpec(config, localSegment)
+  const movements = spec?.movements ?? []
+  const movementNames = movements.length ? movements.map((m) => m.name_ru) : (pick.movements ?? [])
+  const inheritedName = config.segments.find((s) => s.key === data.complaints.segment)?.name_ru
 
   return (
     <>
-      <Section id="s7" number={7} title={sections('s7')}>
+      <Section id="s7" number={7} title={sections('s7')} filled={c.filled.has(7)}>
         <button
           type="button"
-          className="min-h-11 w-fit rounded bg-teal-700 px-4 font-medium text-white"
+          className="min-h-11 w-fit rounded-lg bg-teal-700 px-4 font-medium text-white shadow-sm hover:bg-teal-800"
           onClick={() => {
             PSYCHO_KEYS.forEach((k) => update(`psycho.${k}`, config.psycho[k]?.default_ru ?? null))
           }}
@@ -172,15 +208,15 @@ export function SectionsB({ c }: { c: Ctx }) {
         ))}
       </Section>
 
-      <Section id="s8" number={8} title={sections('s8')}>
+      <Section id="s8" number={8} title={sections('s8')} filled={c.filled.has(8)}>
         <VitalsFields vitals={data.vitals} base="vitals" update={update} />
-        <p className="text-sm text-slate-800">
+        <p className="w-fit rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-800">
           {f('bmi')}:{' '}
           <strong>{c.bmiValue === null ? '—' : c.bmiValue.toFixed(1).replace('.', ',')}</strong>
         </p>
       </Section>
 
-      <Section id="s9" number={9} title={sections('s9')}>
+      <Section id="s9" number={9} title={sections('s9')} filled={c.filled.has(9)}>
         <Field label={f('severity')}>
           <Segmented
             label={f('severity')}
@@ -207,7 +243,7 @@ export function SectionsB({ c }: { c: Ctx }) {
         </Field>
       </Section>
 
-      <Section id="s10" number={10} title={sections('s10')}>
+      <Section id="s10" number={10} title={sections('s10')} filled={c.filled.has(10)}>
         {SYSTEM_KEYS.map((key) => {
           const finding = data.systems[key]
           const normalText = config.systems[key]?.normal_ru ?? null
@@ -243,13 +279,14 @@ export function SectionsB({ c }: { c: Ctx }) {
         })}
       </Section>
 
-      <Section id="s11" number={11} title={sections('s11')}>
+      <Section id="s11" number={11} title={sections('s11')} filled={c.filled.has(11)}>
         <Field label={f('segment')}>
           <Select
             label={f('segment')}
             value={data.local_status.segment}
             onChange={(v) => update('local_status.segment', v)}
             options={segmentOptions}
+            placeholder={inheritedName ? `${inheritedName} (${f('fromComplaints')})` : undefined}
           />
         </Field>
         <Field label={f('inspection')}>
@@ -275,35 +312,61 @@ export function SectionsB({ c }: { c: Ctx }) {
           />
         </Field>
         <Field label={f('rom')}>
-          {data.local_status.rom.map((r, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="min-w-0 flex-1">
-                <Select
-                  label={f('movement')}
-                  value={r.movement || null}
-                  onChange={(v) => update(`local_status.rom.${i}.movement`, v ?? '')}
-                  options={(pick.movements ?? []).map((m) => ({ value: m, label: m }))}
-                />
+          {data.local_status.rom.map((r, i) => {
+            const normal = movements.find((m) => m.name_ru === r.movement)?.rom_normal
+            return (
+              <div key={i} className="grid gap-1">
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Select
+                      label={f('movement')}
+                      value={r.movement || null}
+                      onChange={(v) => update(`local_status.rom.${i}.movement`, v ?? '')}
+                      options={[
+                        ...new Set([
+                          ...movementNames,
+                          ...(r.movement && !movementNames.includes(r.movement)
+                            ? [r.movement]
+                            : []),
+                        ]),
+                      ].map((m) => ({ value: m, label: m }))}
+                    />
+                  </div>
+                  <Num
+                    label={f('degrees')}
+                    value={r.degrees}
+                    onChange={(v) => update(`local_status.rom.${i}.degrees`, v ?? 0)}
+                    negative
+                    min={-90}
+                    max={360}
+                  />
+                  <RemoveButton
+                    label="Удалить"
+                    onClick={() =>
+                      update(
+                        'local_status.rom',
+                        data.local_status.rom.filter((_, j) => j !== i),
+                      )
+                    }
+                  />
+                </div>
+                {normal !== undefined && normal !== null && (
+                  <span className="text-xs text-slate-600">
+                    {f('romNormal')}: {normal}°
+                  </span>
+                )}
               </div>
-              <Num
-                label={f('degrees')}
-                value={r.degrees}
-                onChange={(v) => update(`local_status.rom.${i}.degrees`, v ?? 0)}
-                negative
-                min={-90}
-                max={360}
-              />
-              <RemoveButton
-                label="Удалить"
-                onClick={() =>
-                  update(
-                    'local_status.rom',
-                    data.local_status.rom.filter((_, j) => j !== i),
-                  )
-                }
-              />
-            </div>
-          ))}
+            )
+          })}
+          <QuickAdd
+            label={f('quickAddRom')}
+            options={movementNames.filter(
+              (m) => !data.local_status.rom.some((r) => r.movement === m),
+            )}
+            onPick={(m) =>
+              update('local_status.rom', [...data.local_status.rom, { movement: m, degrees: 0 }])
+            }
+          />
           <AddButton
             onClick={() =>
               update('local_status.rom', [...data.local_status.rom, { movement: '', degrees: 0 }])
@@ -314,7 +377,7 @@ export function SectionsB({ c }: { c: Ctx }) {
         </Field>
         <Field label={f('stability')}>
           {data.local_status.stability.map((s, i) => (
-            <div key={i} className="grid gap-2 rounded border border-slate-200 p-2">
+            <div key={i} className="grid gap-2 rounded-xl border border-slate-200 p-2">
               <div className="flex gap-2">
                 <div className="min-w-0 flex-1">
                   <Text
@@ -342,6 +405,18 @@ export function SectionsB({ c }: { c: Ctx }) {
               />
             </div>
           ))}
+          <QuickAdd
+            label={f('quickAddTest')}
+            options={(spec?.tests ?? []).filter(
+              (name) => !data.local_status.stability.some((s) => s.test === name),
+            )}
+            onPick={(name) =>
+              update('local_status.stability', [
+                ...data.local_status.stability,
+                { test: name, result: '' },
+              ])
+            }
+          />
           <AddButton
             onClick={() =>
               update('local_status.stability', [
@@ -350,7 +425,7 @@ export function SectionsB({ c }: { c: Ctx }) {
               ])
             }
           >
-            {f('addTest')}
+            {spec?.tests.length ? f('addOtherTest') : f('addTest')}
           </AddButton>
         </Field>
         <Field label={f('neurovascular')}>
